@@ -31,10 +31,12 @@ dxl = left[1] - left[0]
 right = np.linspace(0,0.5,40)[1:]
 dxr = right[1] - right[0]
 
-left_boundary = np.linspace(-0.5 - (35 * dxl), -0.5 - dxl, 35)
-right_boundary = np.linspace(0.5 + dxr, 0.5 + (35 * dxr), 35)
+n_edge = 35
 
-h = 2*(right[1] - right[0])
+left_boundary = np.linspace(-0.5 - (n_edge * dxl), -0.5 - dxl, n_edge)
+right_boundary = np.linspace(0.5 + dxr, 0.5 + (n_edge * dxr), n_edge)
+
+h = 1*(right[1] - right[0])
 
 left = np.append(left_boundary, left)
 right = np.append(right, right_boundary)
@@ -55,12 +57,14 @@ num = len(x)
 
 fig, ax = plt.subplots()
 
+dt = 1e-03
+t = 0
 
 for j in range(300):
 
-	print(j)
+	print('j = ', j)
 
-	dt = 1e-03
+	
 
 	x_inc = np.zeros_like(x, dtype='float32')
 	rho_inc = np.copy(rho)                  #     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -69,7 +73,7 @@ for j in range(300):
 
 	## Iterate over all particles and store the accelerations in temp arrays ##
 	## 10 particles to the left and 10 particles to the right as boundary ###
-	for i in range(35, num - 35):
+	for i in range(n_edge, num - n_edge):
 
 		### Evaluating variables ###
 
@@ -100,7 +104,7 @@ for j in range(300):
 
 		### Evaluating gradients ###
 
-		grad_v = -1 * np.sum(m * (p_rho_ij + pi_ij) * dwij)            
+		grad_v = -1 * np.sum(m * (p_rho_ij + pi_ij) * dwij)
 		grad_e = 0.5 * np.sum(m * (p_rho_ij + pi_ij) * vij * dwij)
 
 		rho_inc[i] = np.sum(m * wij) #dt * grad_rho
@@ -113,6 +117,10 @@ for j in range(300):
 
 	    
 	## Update the original arrays using the increment arrays ##
+	
+	#plt.scatter(np.arange(len(rho_inc)), rho_inc, s = 1)
+	#plt.show()
+	#s()
 	    
 	rho = rho_inc
 	v += v_inc
@@ -131,10 +139,17 @@ for j in range(300):
 
 	ax.scatter(x, rho, s = 3, color = 'k')
 	#ax.axis(ymin = -0.1, ymax = 1.5)
+	plt.title('t = ' + str(t))
 	plt.draw()
 	plt.pause(0.001)
 
 	#kb = readchar.readkey()
+	
+	t += dt
+	print('t = ', t)
+	print()
+	
+	
 
 
 plt.savefig('Fig.png')
