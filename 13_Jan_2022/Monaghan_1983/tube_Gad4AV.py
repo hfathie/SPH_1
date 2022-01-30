@@ -94,6 +94,34 @@ def Art_visc(x, v, rho, c, h):
 	return PI
 
 
+
+@njit
+def Art_visc_Gad(x, v, rho, c, h): # Gadget 2 & 4 Artificial viscosity.
+
+	N = len(h)
+	PI = np.zeros((N, N))
+	eta = 0.01
+
+	for i in range(N):
+		for j in range(N):
+
+			hij = 0.5 * (h[i] + h[j])
+			vij = v[i] - v[j]
+			xij = x[i] - x[j]
+			rij = np.sqrt(xij**2)
+			rhoij = 0.5 * (rho[i] + rho[j])
+
+			wij = vij * xij / (rij+eta**2)
+			vij_sig = c[i] + c[j] - 3. * wij
+
+			if vij * xij < 0.0:
+
+				PI[i][j] = -0.5 * alpha * vij_sig * wij / rhoij
+
+	return PI
+
+
+
 @njit
 def density_h(x, m, h):
 
@@ -114,7 +142,7 @@ def density_h(x, m, h):
 
 
 @njit
-def Acc_Monaghan_1st(x, rho, P, h, m, q_von_bulk):
+def Acc(x, rho, P, PI, h):
 
 	N = len(m)
 	acc = np.zeros(N)
@@ -126,7 +154,7 @@ def Acc_Monaghan_1st(x, rho, P, h, m, q_von_bulk):
 		
 		for j in range(N):
 		
-			s += m[j] * ((P[i]+q_von_bulk[i])/rho[i]**2 + (P[j]+q_von_bulk[j])/rho[j]**2) * gW[i][j]
+			s += m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PI[i][j]) * gW[i][j]
 			
 		acc[i] = -1.0 * s
 	
@@ -135,7 +163,7 @@ def Acc_Monaghan_1st(x, rho, P, h, m, q_von_bulk):
 
 
 @njit
-def U_h_Monaghan_1st(x, v, rho, P, h, q_von_bulk):   # Modify this ~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+def U_h(x, v, rho, P, PI, h):
 
 	N = len(m)
 	U = np.zeros(N)
@@ -148,89 +176,11 @@ def U_h_Monaghan_1st(x, v, rho, P, h, q_von_bulk):   # Modify this ~~~!!!!!!!!!!
 		for j in range(N):
 		
 			vij = v[i] - v[j]
-			s += 0.5 * m[j] * ((P[i]+q_von_bulk[i])/rho[i]**2 + (P[j]+q_von_bulk[j])/rho[j]**2) * vij * gW[i][j]
+			s += m[j] * (P[i]/rho[i]**2 + 0.5 * PI[i][j]) * vij * gW[i][j]
 		
 		U[i] = s
 	
 	return U
-
-
-
-
-#def AVisc_Monaghan_First()
-
-
-@njit
-def divVel(x, v, h, rho, m):
-
-	N = len(m)
-	divV = np.zeros(N)
-	gW = grad_kernel_h(x, h)
-
-	for i in range(N):
-		
-		s = 0.0
-		
-		for j in range(N):
-		
-			vji = v[j] - v[i]
-			
-			s += m[j] / rho[i] * vji * gW[i][j]
-
-		divV[i] = s
-
-	return divV
-
-
-
-def q_von_neumann(alpha, h, rho, divV): # Pressure due to the Von Neumann-Richtmyer viscosity (Monaghan 1983).
-
-	N = len(rho)
-	qq = np.zeros(N)
-	
-	for i in range(N):
-	
-		if divV[i] < 0.:
-			qq[i] = alpha * rho[i] * h[i] * h[i] * divV[i] * divV[i]
-
-	return qq
-
-
-def q_bulk(alpha, h, c, rho, divV):
-
-	N = len(rho)
-	qq = np.zeros(N)
-	
-	for i in range(N):
-		
-		if divV[i] < 0.:
-			qq[i] = -1. * alpha * rho[i] * h[i] * c[i] * divV[i]
-	
-	return qq
-
-
-def q_von_bulk(alpha, h, c, rho, divV):
-
-	q1 = q_von_neumann(alpha, h, rho, divV)
-	q2 = q_bulk(alpha, h, c, rho, divV)
-	
-	return q1 + q2
-
-
-
-def check_u(u, u_prevous):
-
-	N = len(u)
-
-	for i in range(N):
-	
-		if u[i] < 0.5 * u_previous[i]:
-			u[i] = u_previous[i]
-	
-	return u
-
-
-
 
 #*********************************************
 #*********** Initial Condition ***************
@@ -248,7 +198,7 @@ xRight = np.append(xRight, Right_boundary)
 
 x = np.append(xLeft, xRight)
 
-h = np.zeros_like(x) + 2. * dxR # We take 2*dxR as the smoothing length
+h = np.zeros_like(x) + 2. * dxR # We take 2*dxR as the smoothing length (See section 3 in Monaghan 1983)
 
 m = np.zeros_like(x) + 0.0002
 rho = density_h(x, m, h)
@@ -268,13 +218,11 @@ beta = 2.0
 v = np.zeros_like(x)
 
 c = (gamma * P / rho) ** 0.5
-#PI = Art_visc(x, v, rho, c, h)
-#acc = Acc(x, rho, P, PI, h)
-divV = divVel(x, v, h, rho, m)
-qq = q_von_bulk(alpha, h, c, rho, divV)
-acc = Acc_Monaghan_1st(x, rho, P, h, m, qq)
+PI = Art_visc_Gad(x, v, rho, c, h)
+acc = Acc(x, rho, P, PI, h)
 
-dt = 1e-4
+
+dt = 2e-4
 t = 0.0
 
 plt.ion()
@@ -285,41 +233,25 @@ fig, ax = plt.subplots()
 for i in range(50000):
 
 	v += acc * dt/2.0
-	
 	v[:50] = 0.0 # setting the velocity of the boundaries back to zero.
 	v[-20:] = 0.0 # setting the velocity of the boundaries back to zero.
 	
 	x += v * dt
 	
 	rho = density_h(x, m, h)
-	
 	rho[:50] = 1.0 # returning the density of the boundary particles back to their initial values.
 	rho[-20:] = 0.125
 	
 	P = (gamma - 1.0) * rho * u
 	P[:50] = 1.0
 	P[-20:] = 0.1
-	
 	c = (gamma * P / rho) ** 0.5
-
-	divV = divVel(x, v, h, rho, m)
-		
-	#qq = q_von_bulk(alpha, h, c, rho, divV)
-	qq1 = q_von_neumann(alpha, h, rho, divV)
-	qq2 = q_bulk(alpha, h, c, rho, divV)
-		
-	qq = qq2
-	
-	ut = U_h_Monaghan_1st(x, v, rho, P, h, qq)
+	PI = Art_visc_Gad(x, v, rho, c, h)
+	ut = U_h(x, v, rho, P, PI, h)
 	
 	u += ut * dt
 	
-	if i > 1: u = check_u(u, u_previous)
-		
-	
-	u_previous = u.copy()
-
-	acc = Acc_Monaghan_1st(x, rho, P, h, m, qq)
+	acc = Acc(x, rho, P, PI, h)
 	
 	v += acc * dt/2.0
 
@@ -333,6 +265,11 @@ for i in range(50000):
 	time.sleep(0.01)
 	
 	t += dt
+	
+	dt = np.min(0.3 * h/c)
+
+	print('delta_t = ', np.min(0.3 * h/c))
+
 
 
 
