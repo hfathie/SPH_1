@@ -1,5 +1,6 @@
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 
@@ -36,6 +37,9 @@ for x in X:
 			i += 1
 
 
+
+plt.scatter(r[:, 0], r[:, 1], s = 1)
+plt.show()
 
 
 
