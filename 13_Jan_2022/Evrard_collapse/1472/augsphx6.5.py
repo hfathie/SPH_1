@@ -403,7 +403,7 @@ except:
 	pass
 
 
-with open('Evrard_7208.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_1472.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
@@ -416,7 +416,7 @@ rSPH = np.hstack((resx, resy, resz))
 rDM = rSPH.copy()
 N = len(rSPH)
 
-epsilonSPH = np.zeros(N) + 0.02
+epsilonSPH = np.zeros(N) + 0.10
 #epsilonDM = np.zeros((1, N)) + 0.20
 epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
 
