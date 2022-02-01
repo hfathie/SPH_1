@@ -100,7 +100,7 @@ def Art_visc_Gad(x, v, rho, c, h): # Gadget 2 & 4 Artificial viscosity.
 
 	N = len(h)
 	PI = np.zeros((N, N))
-	eta = 0.01
+	eta = 0.0001
 
 	for i in range(N):
 		for j in range(N):
@@ -258,7 +258,7 @@ for i in range(50000):
 
 	ax.cla()	
 	
-	ax.scatter(x, rho, s = 1)
+	ax.scatter(x, P, s = 1)
 	ax.set_title('t = ' + str(round(t, 3)))
 	fig.canvas.flush_events()
 

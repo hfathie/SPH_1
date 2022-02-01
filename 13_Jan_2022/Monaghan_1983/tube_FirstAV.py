@@ -308,7 +308,7 @@ for i in range(50000):
 	qq1 = q_von_neumann(alpha, h, rho, divV)
 	qq2 = q_bulk(alpha, h, c, rho, divV)
 		
-	qq = qq2
+	qq = qq1
 	
 	ut = U_h_Monaghan_1st(x, v, rho, P, h, qq)
 	

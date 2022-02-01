@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import readchar
 import matplotlib.pyplot as plt
+import time
 
 @np.vectorize 
 def cubic_spline(r, h, order):
@@ -53,6 +54,7 @@ e = p / ((gamma - 1) * rho)
 num = len(x)
 
 
+plt.ion()
 fig, ax = plt.subplots()
 
 
@@ -131,8 +133,8 @@ for j in range(300):
 
 	ax.scatter(x, rho, s = 3, color = 'k')
 	#ax.axis(ymin = -0.1, ymax = 1.5)
-	plt.draw()
-	plt.pause(0.001)
+	fig.canvas.flush_events()
+	time.sleep(0.01)
 
 	#kb = readchar.readkey()
 
