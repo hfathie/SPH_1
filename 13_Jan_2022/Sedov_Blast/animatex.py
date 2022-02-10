@@ -11,6 +11,7 @@ with open('PlaneXY.pkl', 'rb') as f:
 	nXY = pickle.load(f) # the indices of the particles residing in the XY plane at Z = 0.0
 
 dirx = './Outputs/'
+dirx = './Outputs_U_10.0_h_0.04/'
 
 filez = np.sort(os.listdir(dirx))
 
@@ -30,12 +31,13 @@ for j in range(0, len(filez), 10):
 	ry = r[:, 1]
 	rz = r[:, 2]
 
-	ax.plot(rx[nXY], ry[nXY], marker = 'D', markersize = 4, markeredgecolor = 'black', markerfacecolor = 'white', linestyle = 'None')
+	ax.plot(rx[nXY], ry[nXY], marker = 'D', markersize = 5, markeredgecolor = 'black', markerfacecolor = 'white', linestyle = 'None')
 
-	x = y = 0.3
+	x = y = 0.5
 
 	ax.axis(xmin = -x, xmax = x)
 	ax.axis(ymin = -y, ymax = y)
+	#ax.axis(ymin = -0.13, ymax = 0)
 
 	fig.canvas.flush_events()
 	time.sleep(0.01)

@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import pickle
 
 
-N = 20
+N = 26
 
-xL = np.linspace(-0.2, 0, int(N/2))
-xR = np.linspace(0, 0.2, int(N/2))
+xL = np.linspace(-0.30, 0, int(N/2))
+xR = np.linspace(0, 0.30, int(N/2))
 
 
 X = np.concatenate((xL[:-1], xR)) # [:-1] is used to exclude one of the zeros !
@@ -34,14 +34,14 @@ for x in X:
 	for y in Y:
 
 		for z in Z:
-		
+
 			r[i, 0] = x
 			r[i, 1] = y
 			r[i, 2] = z
-			
+
 			if z == 0.:
 				planeXY.append(i) # saving the indices of the particles residing in the XY plane at Z = 0.0
-			
+
 			i += 1
 
 

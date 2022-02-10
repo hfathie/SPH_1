@@ -10,7 +10,7 @@ import os
 #from cool_libs import *
 from numba import jit, njit
 import concurrent.futures
-
+from concurrent.futures import ThreadPoolExecutor
 
 
 #===== W_I
@@ -63,7 +63,7 @@ def gradW_I(posz): # posz is a tuple containg two arrays: r and h.
 			dx = pos[i, 0] - pos[j, 0]
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			rr = (dx**2 + dy**2 + dz**2)**0.5
 
 			sig = 1.0/np.pi
 			hij = 0.5 * (h[i] + h[j])
@@ -96,9 +96,49 @@ def getDensity(r, pos, m, h):  # You may want to change your Kernel !!
 
 
 
-#===== PI_ij as in Gadget 2.0 or 4.0
+
+#===== Standard PI_ij (Monaghan & Gingold 1983)
 @njit
 def PI_ij(pos, v, rho, c, m, h, eta, alpha, beta):
+
+	N = pos.shape[0]
+	
+	PIij = np.zeros((N, N))
+
+	for i in range(N):
+
+		for j in range(N):
+		
+			rijx = pos[i, 0] - pos[j, 0]
+			rijy = pos[i, 1] - pos[j, 1]
+			rijz = pos[i, 2] - pos[j, 2]
+			
+			vijx = v[i, 0] - v[j, 0]
+			vijy = v[i, 1] - v[j, 1]
+			vijz = v[i, 2] - v[j, 2]
+			
+			vij_rij = vijx*rijx + vijy*rijy + vijz*rijz
+			
+			rr = np.sqrt(rijx**2 + rijy**2 + rijz**2)
+			
+			hij = 0.5 * (h[i] + h[j])
+			rhoij = 0.5 * (rho[i] + rho[j])
+			cij = 0.5 * (c[i] + c[j])
+			
+			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
+			
+			if vij_rij <=0:
+			
+				PIij[i][j] = (-alpha * cij * muij + beta * muij*muij) / rhoij
+
+	return PIij
+
+
+
+
+#===== PI_ij as in Gadget 2.0 or 4.0
+@njit
+def PI_ijXXX(pos, v, rho, c, m, h, eta, alpha, beta):
 
 	N = pos.shape[0]
 	
@@ -153,20 +193,20 @@ def getAcc_sph(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
 	az = np.zeros(N)
 
 	for i in range(N):
-	
+
 		axt = 0.0
 		ayt = 0.0
 		azt = 0.0
 		for j in range(N):
-			
+
 			axt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWx[i][j]
 			ayt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWy[i][j]
 			azt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWz[i][j]
-	
+
 		ax[i] = axt
 		ay[i] = ayt
 		az[i] = azt
-	
+
 	ax = ax.reshape((N, 1))
 	ay = ay.reshape((N, 1))
 	az = az.reshape((N, 1))
@@ -174,7 +214,7 @@ def getAcc_sph(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
 	a = np.hstack((ax, ay, az))
 
 	return a
-	
+
 
 
 #===== get_dU
@@ -319,7 +359,7 @@ def do_smoothingX(poz):
             dx = pos[j, 0] - subpos[i, 0]
             dy = pos[j, 1] - subpos[i, 1]
             dz = pos[j, 2] - subpos[i, 2]
-            dist[j] = np.sqrt(dx**2 + dy**2 + dz**2)
+            dist[j] = (dx*dx + dy*dy + dz*dz)**0.5
 
         hres.append(np.sort(dist)[64])
 
@@ -329,7 +369,7 @@ def do_smoothingX(poz):
 
 
 #===== smooth_hX
-#@njit
+@njit
 def do_smoothing(poz):
 
     pos = poz[0]
@@ -346,7 +386,7 @@ def do_smoothing(poz):
             dx = pos[j, 0] - subpos[i, 0]
             dy = pos[j, 1] - subpos[i, 1]
             dz = pos[j, 2] - subpos[i, 2]
-            dist[j] = np.sqrt(dx**2 + dy**2 + dz**2)
+            dist[j] = (dx*dx + dy*dy + dz*dz)**0.5
 
         hres.append(np.sort(dist)[64])
 
@@ -356,7 +396,7 @@ def do_smoothing(poz):
 #===== smoothing_in_parallel
 def smooth_h(pos):
 
-	nCPUs = 6
+	nCPUs = 5
 	N = pos.shape[0]
 	lenx = int(N / nCPUs)
 	posez = []
@@ -380,25 +420,175 @@ def smooth_h(pos):
 
 
 
+#===== do_acc_sph
+@njit(nogil=True, parallel=True)
+def do_acc_sph(poz):
+
+	M = poz[0]; nLow = poz[1]; nUp = poz[2]
+	
+	N = nUp - nLow
+	
+	gWx, gWy, gWz = gradW_I((r, h))
+	
+	ax = np.zeros(N)
+	ay = np.zeros(N)
+	az = np.zeros(N)
+
+	for i in range(nLow, nUp):
+
+		axt = 0.0
+		ayt = 0.0
+		azt = 0.0
+		for j in range(M):
+
+			axt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWx[i][j]
+			ayt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWy[i][j]
+			azt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWz[i][j]
+
+		ax[i-nLow] = axt
+		ay[i-nLow] = ayt
+		az[i-nLow] = azt
+
+	ax = ax.reshape((N, 1))
+	ay = ay.reshape((N, 1))
+	az = az.reshape((N, 1))
+	
+	a = np.hstack((ax, ay, az))
+
+	return a
+
+from concurrent.futures import ThreadPoolExecutor
+
+#===== Acc_sph_parallel
+def Acc_sph_parallel(pos):
+
+	nCPUs = 4
+	N = pos.shape[0]
+	lenx = int(N / nCPUs)
+	posez = []
+
+	for k in range(nCPUs - 1):
+		posez.append((N, k*lenx, (k+1)*lenx))
+	posez.append((N, (nCPUs-1)*lenx, N))
+	
+	
+	with ThreadPoolExecutor(max_workers=nCPUs) as executor:
+	
+		res = executor.map(do_acc_sph, posez)
+	
+	out = np.empty((0, 3))
+	
+	for xx in res:
+	
+		out = np.append(out, xx, axis = 0)
+
+	return out
+
+
+
+
+
+#===== do_gradW_I
+@njit(nogil=True, parallel=True)
+def do_gradW_I(poz): # posz is a tuple containg two arrays: r and h.
+
+	M = poz[0]; nLow = poz[1]; nUp = poz[2]
+	print(M)
+	
+	N = nUp - nLow
+	
+	gWx = np.zeros((N, M))
+	gWy = np.zeros((N, M))
+	gWz = np.zeros((N, M))
+
+	for i in range(N):
+		for j in range(nLow, nUp):
+
+			dx = r[i, 0] - r[j, 0]
+			dy = r[i, 1] - r[j, 1]
+			dz = r[i, 2] - r[j, 2]
+			rr = (dx**2 + dy**2 + dz**2)**0.5
+
+			sig = 1.0/np.pi
+			hij = 0.5 * (h[i] + h[j])
+			q = rr / hij
+			
+			if q <= 1.0:
+				nW = sig/hij**5 * (-3.0 + 9.0/4.0 * q)
+				gWx[i-nLow][j] = nW * dx
+				gWy[i-nLow][j] = nW * dy
+				gWz[i-nLow][j] = nW * dz
+
+			if (q > 1.0) & (q <= 2.0):
+				nW = -3.0*sig/4.0/hij**5 * (2.0 - q)**2 / (q+1e-20)
+				gWx[i-nLow][j] = nW * dx
+				gWy[i-nLow][j] = nW * dy
+				gWz[i-nLow][j] = nW * dz
+
+	return gWx, gWy, gWz
+
+
+
+#===== gradW_I_parallel
+def gradW_I_parallel(pos):
+
+	nCPUs = 4
+	N = pos.shape[0]
+	lenx = int(N / nCPUs)
+	posez = []
+
+	for k in range(nCPUs - 1):
+		posez.append((N, k*lenx, (k+1)*lenx))
+	posez.append((N, (nCPUs-1)*lenx, N))
+
+
+	with ThreadPoolExecutor(max_workers=nCPUs) as executor:
+	
+		res = executor.map(do_gradW_I, posez)
+	
+	gWx = np.empty((0, N))
+	gWy = np.empty((0, N))
+	gWz = np.empty((0, N))
+
+	for gwx, gwy, gwz in res:
+
+		gWx = np.append(gWx, gwx, axis = 0)
+		gWy = np.append(gWy, gwy, axis = 0)
+		gWz = np.append(gWz, gwz, axis = 0)
+
+
+	return gWx, gWy, gWz
+
+
+
+
+
+
+
+
+
+
+
 np.random.seed(42)
 
 #---- Constants -----------
-eta = 0.1
+eta = 0.01
 gama = 5.0/3.0
 alpha = 1.0
 beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.0002
+dt = 0.005
 tEnd = 30.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
+folderNam = './Outputs_U_5.0_h_0.025/'
 
-filz = np.sort(os.listdir('./Outputs/'))
+filz = np.sort(os.listdir(folderNam))
 try:
 	for k in range(len(filz)):
-		os.remove('./Outputs/' + filz[k])
+		os.remove(folderNam + filz[k])
 except:
 	pass
 
@@ -423,7 +613,7 @@ epsilonSPH = np.zeros(N) + 0.005
 epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
 
 
-MSPH = 1.0 # total gas mass
+MSPH = 1.1 # total gas mass
 #MDM = 0.9 # total DM mass
 
 rr = np.sqrt(resx**2 + resy**2 + resz**2).reshape((1, N))
@@ -454,10 +644,11 @@ vDM = vSPH.copy()
 uFloor = 0.0005 #0.00245 # This is also the initial u.   NOTE to change this in 'do_sth' function too !!!!!!!!!!!!!!!!!!!!!
 u = np.zeros(N) + uFloor # 0.0002405 is equivalent to T = 1e3 K
 
-u[3429] = 10.0 # This is the expolsive energy injected into the center of the system by one single particle !!!!!!!!!!!!!!
+u[7812] = 5.0 # This is the expolsive energy injected into the center of the system by one single particle !!!!!!!!!!!!!!
 
 #h = smooth_h(rSPH)                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-h = do_smoothingX((rSPH, rSPH))
+#h = do_smoothingX((rSPH, rSPH))
+h = 0.025 + np.zeros_like(u)
 mSPH = np.zeros(N) + MSPH/N
 #mDM = np.zeros((1, N)) + MDM/N
 
@@ -465,7 +656,23 @@ r = rSPH #np.vstack((rSPH, rDM))
 v = 0.0 * vSPH #np.vstack((vSPH, vDM))
 m = mSPH #np.hstack((mSPH, mDM))
 
+
+
+
+#from do_gW import *
+
+#Tgw = time.time()
+#gWx, gWy, gWz = gradW_I_parallel(r)
+#print('TgW_parallel = ', time.time() - Tgw)
+
+
 rho = getDensity(r[:N, :], r[:N, :], mSPH, h)
+
+print('rho = ', np.median(rho))
+
+plt.hist(rho, bins = 10)
+plt.show()
+
 
 TG = time.time()
 acc_g = getAcc_g_smth(r, m, G, epsilon)
@@ -474,7 +681,24 @@ print('TG = ', time.time() - TG)
 P = getPressure(rho, u, gama)
 c = np.sqrt(gama * (gama - 1.0) * u)
 PIij = PI_ij(r, v, rho, c, m, h, eta, alpha, beta)
+
+
+
+#Tgw = time.time()
+#gWx, gWy, gWz = gradW_I((r, h))
+#print('TgW = ', time.time() - Tgw)
+
+T_acc = time.time()
 acc_sph = getAcc_sph(rSPH, vSPH, rho, P, PIij, h, m, gama, eta, alpha, beta)
+print('T_acc = ', time.time() - T_acc)
+
+
+#T_acc_parallel = time.time()
+#acc_sph = Acc_sph_parallel(rSPH)
+#print('T_acc_parallel = ', time.time() - T_acc_parallel)
+#print(acc_sph_par)
+
+
 acc = acc_g.copy()
 acc[:N, :] = acc[:N, :] + acc_sph
 
@@ -494,12 +718,23 @@ t = 0.0
 
 u_previous = u.copy()
 uold = u.copy()
+
+
+#from do_dU import *
+
+#T_dUCy = time.time()
+#utt = get_dUx(r[:N, :], v[:N, :], rho, P, PIij, gWx, gWy, gWz, h, m, gama, eta, alpha, beta)
+#print('T_dUCy = ', time.time() - T_dUCy)
+
+T_dU = time.time()
 ut = get_dU(r[:N, :], v[:N, :], rho, P, PIij, h, m, gama, eta, alpha, beta)
+print('T_dU_outside = ', time.time() - T_dU)
 ut_previous = ut.copy()
 
 TA = time.time()
 
 i = 0
+
 
 print('Hey !!!! I am here !!!!!')
 
@@ -511,10 +746,11 @@ while t < tEnd:
 
 	r += v * dt
 
-	T1 = time.time()
+	#T1 = time.time()
 	#h = smooth_h(r[:N, :])
-	h = do_smoothingX((r[:N, :], r[:N, :]))
-	print('T1 = ', time.time() - T1)
+	#h = do_smoothingX((r[:N, :], r[:N, :]))
+	#h = do_smoothingZ(r[:N, :])
+	#print('T1 = ', time.time() - T1)
 	
 	T2 = time.time()
 	rho = getDensity(r[:N, :], r[:N, :], mSPH, h)
@@ -531,6 +767,11 @@ while t < tEnd:
 	PIij = PI_ij(r[:N, :], v[:N, :], rho, c, m, h, eta, alpha, beta)
 	print('TP = ', time.time() - TP)
 	T4 = time.time()
+	
+	#TgW = time.time()
+	#gWx, gWy, gWz = gradW_I((r, h))
+	#print('TgW = ', time.time() - TgW)
+	
 	ut = get_dU(r[:N, :], v[:N, :], rho, P, PIij, h, m, gama, eta, alpha, beta)
 	print('T4 = ', time.time() - T4)
 	uold += dt * ut
@@ -541,8 +782,10 @@ while t < tEnd:
 	u_previous = u.copy()
 	ut_previous = ut.copy()
 
+
 	T5 = time.time()
 	acc_sph = getAcc_sph(r[:N, :], v[:N, :], rho, P, PIij, h, m, gama, eta, alpha, beta)
+	#acc_sph = Acc_sph_parallel(r)
 	print('T5 = ', time.time() - T5)
 	#acc = acc_g.copy()
 	#acc[:N, :] = acc[:N, :] + acc_sph
@@ -557,6 +800,8 @@ while t < tEnd:
 	
 	#U_tot = np.sum(m * u)
 	#U_save[i+1] = U_tot
+	
+	print('h/c = ', np.sort(h/c))
 
 	v += acc * dt/2.0
 	
@@ -567,7 +812,7 @@ while t < tEnd:
 	i += 1
 
 	dictx = {'pos': r, 'v': v, 'm': m, 'uDirectcool': u, 'dt': dt, 'current_t': t, 'rho': rho}
-	with open('./Outputs/' + str(i).zfill(5) + '.pkl', 'wb') as f:
+	with open(folderNam + str(i).zfill(5) + '.pkl', 'wb') as f:
 		pickle.dump(dictx, f)
 	
 	print('Loop time = ', time.time() - TB)
