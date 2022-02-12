@@ -361,7 +361,7 @@ def do_smoothingX(poz):
             dz = pos[j, 2] - subpos[i, 2]
             dist[j] = (dx*dx + dy*dy + dz*dz)**0.5
 
-        hres.append(np.sort(dist)[64])
+        hres.append(np.sort(dist)[50])
 
     return np.array(hres) * 0.5
 
@@ -388,7 +388,7 @@ def do_smoothing(poz):
             dz = pos[j, 2] - subpos[i, 2]
             dist[j] = (dx*dx + dy*dy + dz*dz)**0.5
 
-        hres.append(np.sort(dist)[64])
+        hres.append(np.sort(dist)[50])
 
     return hres
 
@@ -562,6 +562,48 @@ def gradW_I_parallel(pos):
 
 
 
+#===== h_smooth_fast 
+@njit
+def h_smooth_fast(pos, h):
+
+	N = pos.shape[0]
+
+	Nth_up = 50 + 10.
+	Nth_low = 50 - 10.
+
+	hres = np.zeros_like(h)
+	
+	n_Max_iteration = 100
+
+	for i in range(N):
+
+		hi = h[i]
+		dist = np.zeros(N)
+
+		for j in range(N):
+
+			dx = pos[j, 0] - pos[i, 0]
+			dy = pos[j, 1] - pos[i, 1]
+			dz = pos[j, 2] - pos[i, 2]
+			dist[j] = (dx*dx + dy*dy + dz*dz)**0.5
+
+		Nngb = np.sum(dist < 2.0*hi)
+
+		while (Nngb > Nth_up) or (Nngb < Nth_low):
+		
+			if Nngb > Nth_up:
+
+				hi -= 0.003 * hi
+
+			if Nngb < Nth_low:
+				
+				hi += 0.003 * hi
+
+			Nngb = np.sum(dist < 2.0*hi)
+
+		hres[i] = hi
+
+	return hres
 
 
 
@@ -579,11 +621,11 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.005
+dt = 0.0025
 tEnd = 30.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
-folderNam = './Outputs_U_5.0_h_0.025/'
+folderNam = './Outputs/'
 
 filz = np.sort(os.listdir(folderNam))
 try:
@@ -613,7 +655,7 @@ epsilonSPH = np.zeros(N) + 0.005
 epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
 
 
-MSPH = 1.1 # total gas mass
+MSPH = 0.14 # total gas mass
 #MDM = 0.9 # total DM mass
 
 rr = np.sqrt(resx**2 + resy**2 + resz**2).reshape((1, N))
@@ -641,14 +683,15 @@ vy[nregC] = -vy[nregC]
 vSPH = np.hstack((vx.T, vy.T, vz.T))
 vDM = vSPH.copy()
 
-uFloor = 0.0005 #0.00245 # This is also the initial u.   NOTE to change this in 'do_sth' function too !!!!!!!!!!!!!!!!!!!!!
+uFloor = 0.0000005 #0.00245 # This is also the initial u.   NOTE to change this in 'do_sth' function too !!!!!!!!!!!!!!!!!!!!!
 u = np.zeros(N) + uFloor # 0.0002405 is equivalent to T = 1e3 K
 
-u[7812] = 5.0 # This is the expolsive energy injected into the center of the system by one single particle !!!!!!!!!!!!!!
+u[7812] = 1.0 # This is the expolsive energy injected into the center of the system by one single particle !!!!!!!!!!!!!!
 
 #h = smooth_h(rSPH)                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#h = do_smoothingX((rSPH, rSPH))
-h = 0.025 + np.zeros_like(u)
+h = do_smoothingX((rSPH, rSPH))
+#h = 0.040 + np.zeros_like(u)
+#h = h_smooth_fast(rSPH, h)
 mSPH = np.zeros(N) + MSPH/N
 #mDM = np.zeros((1, N)) + MDM/N
 
@@ -746,11 +789,12 @@ while t < tEnd:
 
 	r += v * dt
 
-	#T1 = time.time()
+	T1 = time.time()
 	#h = smooth_h(r[:N, :])
 	#h = do_smoothingX((r[:N, :], r[:N, :]))
 	#h = do_smoothingZ(r[:N, :])
-	#print('T1 = ', time.time() - T1)
+	h = h_smooth_fast(rSPH, h)
+	print('T1 = ', time.time() - T1)
 	
 	T2 = time.time()
 	rho = getDensity(r[:N, :], r[:N, :], mSPH, h)

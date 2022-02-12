@@ -6,8 +6,8 @@ import pickle
 
 N = 26
 
-xL = np.linspace(-0.30, 0, int(N/2))
-xR = np.linspace(0, 0.30, int(N/2))
+xL = np.linspace(-0.25, 0, int(N/2))
+xR = np.linspace(0, 0.25, int(N/2))
 
 
 X = np.concatenate((xL[:-1], xR)) # [:-1] is used to exclude one of the zeros !

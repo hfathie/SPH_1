@@ -8,13 +8,13 @@ import time
 import pickle
 import os
 #from cool_libs import *
-from numba import jit, njit
+from numba import jit, prange
 import concurrent.futures
 
 
 
 #===== W_I
-@njit
+@jit
 def W_I(posz): # posz is a tuple containg two arrays: r and h.
 
 	pos = posz[0]
@@ -46,7 +46,7 @@ def W_I(posz): # posz is a tuple containg two arrays: r and h.
 
 
 #===== gradW_I
-@njit
+@jit
 def gradW_I(posz): # posz is a tuple containg two arrays: r and h.
 
 	pos = posz[0]
@@ -97,7 +97,7 @@ def getDensity(r, pos, m, h):  # You may want to change your Kernel !!
 
 
 #===== PI_ij as in Gadget 2.0 or 4.0
-@njit
+@jit
 def PI_ij(pos, v, rho, c, m, h, eta, alpha, beta):
 
 	N = pos.shape[0]
@@ -141,7 +141,7 @@ def getPressure(rho, u, gama):
 
 
 #===== getAcc_sph
-@njit
+@jit
 def getAcc_sph(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
@@ -178,7 +178,7 @@ def getAcc_sph(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
 
 
 #===== get_dU
-@njit
+@jit
 def get_dU(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
@@ -206,7 +206,7 @@ def get_dU(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
 
 
 #===== getKE
-@njit
+@jit
 def getKE(v, m):
 
 	N = v.shape[0]
@@ -220,7 +220,7 @@ def getKE(v, m):
 
 
 #===== getPE
-@njit
+@jit
 def getPE(pos, m, G, epsilon):
 
 	N = pos.shape[0]
@@ -262,7 +262,7 @@ def getPE(pos, m, G, epsilon):
 
 
 #===== getAcc_g_smth
-@njit
+@jit
 def getAcc_g_smth(pos, mass, G, epsilon):
 
 	N = pos.shape[0]
@@ -302,7 +302,7 @@ def getAcc_g_smth(pos, mass, G, epsilon):
 
 
 #===== smooth_hX (non-parallel)
-@njit
+@jit
 def do_smoothingX(poz):
 
     pos = poz[0]
@@ -329,7 +329,7 @@ def do_smoothingX(poz):
 
 
 #===== smooth_hX
-@njit
+@jit
 def do_smoothing(poz):
 
     pos = poz[0]
@@ -416,7 +416,7 @@ rSPH = np.hstack((resx, resy, resz))
 rDM = rSPH.copy()
 N = len(rSPH)
 
-epsilonSPH = np.zeros(N) + 0.005
+epsilonSPH = np.zeros(N) + 0.10
 #epsilonDM = np.zeros((1, N)) + 0.20
 epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
 

@@ -98,7 +98,7 @@ def getDensity(r, pos, m, h):  # You may want to change your Kernel !!
 
 #===== PI_ij as in Gadget 2.0 or 4.0
 @njit
-def PI_ij(pos, v, rho, c, m, h, eta, alpha, beta):
+def PI_ijXXX(pos, v, rho, c, m, h, eta, alpha, beta):
 
 	N = pos.shape[0]
 	
@@ -126,6 +126,46 @@ def PI_ij(pos, v, rho, c, m, h, eta, alpha, beta):
 			if vij_rij < 0:
 			
 				PIij[i][j] = -0.5 * alpha * vij_sig * wij / rhoij
+
+	return PIij
+
+
+
+
+
+#===== Standard PI_ij (Monaghan & Gingold 1983)
+@njit
+def PI_ij(pos, v, rho, c, m, h, eta, alpha, beta):
+
+	N = pos.shape[0]
+	
+	PIij = np.zeros((N, N))
+
+	for i in range(N):
+
+		for j in range(N):
+		
+			rijx = pos[i, 0] - pos[j, 0]
+			rijy = pos[i, 1] - pos[j, 1]
+			rijz = pos[i, 2] - pos[j, 2]
+			
+			vijx = v[i, 0] - v[j, 0]
+			vijy = v[i, 1] - v[j, 1]
+			vijz = v[i, 2] - v[j, 2]
+			
+			vij_rij = vijx*rijx + vijy*rijy + vijz*rijz
+			
+			rr = np.sqrt(rijx**2 + rijy**2 + rijz**2)
+			
+			hij = 0.5 * (h[i] + h[j])
+			rhoij = 0.5 * (rho[i] + rho[j])
+			cij = 0.5 * (c[i] + c[j])
+			
+			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
+			
+			if vij_rij <=0:
+			
+				PIij[i][j] = (-alpha * cij * muij + beta * muij*muij) / rhoij
 
 	return PIij
 
@@ -416,7 +456,7 @@ rSPH = np.hstack((resx, resy, resz))
 rDM = rSPH.copy()
 N = len(rSPH)
 
-epsilonSPH = np.zeros(N) + 0.005
+epsilonSPH = np.zeros(N) + 0.05
 #epsilonDM = np.zeros((1, N)) + 0.20
 epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
 

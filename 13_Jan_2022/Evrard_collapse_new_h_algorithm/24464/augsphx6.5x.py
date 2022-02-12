@@ -1,4 +1,5 @@
 
+# New h algorithm is employed !
 # The difference with augsphx6.4.py is that here we also use epsilonij instead of epsilon
 # The difference with augsphx6.3.py is that here we use hij instead of h
 
@@ -96,9 +97,49 @@ def getDensity(r, pos, m, h):  # You may want to change your Kernel !!
 
 
 
-#===== PI_ij as in Gadget 2.0 or 4.0
+
+#===== Standard PI_ij (Monaghan & Gingold 1983)
 @njit
 def PI_ij(pos, v, rho, c, m, h, eta, alpha, beta):
+
+	N = pos.shape[0]
+	
+	PIij = np.zeros((N, N))
+
+	for i in range(N):
+
+		for j in range(N):
+		
+			rijx = pos[i, 0] - pos[j, 0]
+			rijy = pos[i, 1] - pos[j, 1]
+			rijz = pos[i, 2] - pos[j, 2]
+			
+			vijx = v[i, 0] - v[j, 0]
+			vijy = v[i, 1] - v[j, 1]
+			vijz = v[i, 2] - v[j, 2]
+			
+			vij_rij = vijx*rijx + vijy*rijy + vijz*rijz
+			
+			rr = np.sqrt(rijx**2 + rijy**2 + rijz**2)
+			
+			hij = 0.5 * (h[i] + h[j])
+			rhoij = 0.5 * (rho[i] + rho[j])
+			cij = 0.5 * (c[i] + c[j])
+			
+			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
+			
+			if vij_rij <=0:
+			
+				PIij[i][j] = (-alpha * cij * muij + beta * muij*muij) / rhoij
+
+	return PIij
+
+
+
+
+#===== PI_ij as in Gadget 2.0 or 4.0
+@njit
+def PI_ijXXXXXX(pos, v, rho, c, m, h, eta, alpha, beta):
 
 	N = pos.shape[0]
 	
@@ -348,7 +389,7 @@ def do_smoothing(poz):
             dz = pos[j, 2] - subpos[i, 2]
             dist[j] = np.sqrt(dx**2 + dy**2 + dz**2)
 
-        hres.append(np.sort(dist)[64])
+        hres.append(np.sort(dist)[50])
 
     return hres
 
@@ -380,6 +421,54 @@ def smooth_h(pos):
 
 
 
+#===== h_smooth_fast 
+@njit
+def h_smooth_fast(pos, h):
+
+	N = pos.shape[0]
+
+	Nth_up = 50 + 10.
+	Nth_low = 50 - 10.
+
+	hres = np.zeros_like(h)
+	
+	n_Max_iteration = 100
+
+	for i in range(N):
+
+		hi = h[i]
+		dist = np.zeros(N)
+
+		for j in range(N):
+
+			dx = pos[j, 0] - pos[i, 0]
+			dy = pos[j, 1] - pos[i, 1]
+			dz = pos[j, 2] - pos[i, 2]
+			dist[j] = (dx*dx + dy*dy + dz*dz)**0.5
+
+		Nngb = np.sum(dist < 2.0*hi)
+
+		while (Nngb > Nth_up) or (Nngb < Nth_low):
+		
+			if Nngb > Nth_up:
+
+				hi -= 0.003 * hi
+
+			if Nngb < Nth_low:
+				
+				hi += 0.003 * hi
+
+			Nngb = np.sum(dist < 2.0*hi)
+
+		hres[i] = hi
+
+	return hres
+
+
+
+
+
+
 np.random.seed(42)
 
 #---- Constants -----------
@@ -390,12 +479,12 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.001
+dt = 0.01
 tEnd = 3.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
 
-filz = np.sort(os.listdir('./Outputs'))
+filz = np.sort(os.listdir('./Outputs_'))
 try:
 	for k in range(len(filz)):
 		os.remove('./Outputs/' + filz[k])
@@ -403,7 +492,7 @@ except:
 	pass
 
 
-with open('Evrard_1472.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_24464.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
@@ -453,7 +542,8 @@ uFloor = 0.05 #0.00245 # This is also the initial u.   NOTE to change this in 'd
 u = np.zeros(N) + uFloor # 0.0002405 is equivalent to T = 1e3 K
 
 #h = smooth_h(rSPH)                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-h = do_smoothingX((rSPH, rSPH))
+h = do_smoothingX((rSPH, rSPH))  # This plays the role of the initial h so that the code can start !
+h = h_smooth_fast(rSPH, h)
 mSPH = np.zeros(N) + MSPH/N
 #mDM = np.zeros((1, N)) + MDM/N
 
@@ -507,7 +597,8 @@ while t < tEnd:
 
 	T1 = time.time()
 	#h = smooth_h(r[:N, :])
-	h = do_smoothingX((r[:N, :], r[:N, :]))
+	#h = do_smoothingX((r[:N, :], r[:N, :]))
+	h = h_smooth_fast(r[:N, :], h)
 	print('T1 = ', time.time() - T1)
 	
 	T2 = time.time()
@@ -552,6 +643,8 @@ while t < tEnd:
 	U_save[i+1] = U_tot
 
 	v += acc * dt/2.0
+	
+	print('h/c = ', np.sort(h/c))
 	
 	print('Current time = ', t)
 
