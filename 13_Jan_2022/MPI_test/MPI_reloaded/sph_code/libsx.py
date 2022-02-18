@@ -1,8 +1,4 @@
 
-# New h algorithm is employed !
-# The difference with augsphx6.4.py is that here we also use epsilonij instead of epsilon
-# The difference with augsphx6.3.py is that here we use hij instead of h
-
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -11,8 +7,6 @@ import os
 #from cool_libs import *
 from numba import jit, njit
 import concurrent.futures
-
-
 
 #===== W_I
 @njit
@@ -86,14 +80,84 @@ def gradW_I(posz): # posz is a tuple containg two arrays: r and h.
 
 
 
-#===== getDensity
-def getDensity(r, pos, m, h):  # You may want to change your Kernel !!
+#===== getDensityx
+@njit
+def getDensity(pos, m, h):  # You may want to change your Kernel !!
 
-    M = r.shape[0]
-    
-    rho = np.sum(m * W_I((r, h)), 1)
-    
-    return rho
+	N = pos.shape[0]
+	rho = np.zeros(N)
+
+	for i in range(N):
+
+		s = 0.0
+
+		for j in range(N):
+
+			dx = pos[i, 0] - pos[j, 0]
+			dy = pos[i, 1] - pos[j, 1]
+			dz = pos[i, 2] - pos[j, 2]
+			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			
+			hij = 0.5 * (h[i] + h[j])
+
+			sig = 1.0/np.pi
+			q = rr / hij
+
+			WIij = 0.0
+
+			if q <= 1.0:
+				WIij = sig / hij**3 * (1.0 - (3.0/2.0)*q**2 + (3.0/4.0)*q**3)
+
+			if (q > 1.0) and (q <= 2.0):
+				WIij = sig / hij**3 * (1.0/4.0) * (2.0 - q)**3
+				
+			s += m[j] * WIij
+
+		rho[i] = s
+
+	return rho
+
+
+
+
+
+#===== getDensity_mpi
+@njit
+def getDensity_mpi(nbeg, nend, pos, m, h):  # You may want to change your Kernel !!
+
+	N = pos.shape[0]
+	M = nend - nbeg
+	rho = np.zeros(M)
+
+	for i in range(nbeg, nend):
+
+		s = 0.0
+
+		for j in range(N):
+
+			dx = pos[i, 0] - pos[j, 0]
+			dy = pos[i, 1] - pos[j, 1]
+			dz = pos[i, 2] - pos[j, 2]
+			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			
+			hij = 0.5 * (h[i] + h[j])
+
+			sig = 1.0/np.pi
+			q = rr / hij
+
+			WIij = 0.0
+
+			if q <= 1.0:
+				WIij = sig / hij**3 * (1.0 - (3.0/2.0)*q**2 + (3.0/4.0)*q**3)
+
+			if (q > 1.0) and (q <= 2.0):
+				WIij = sig / hij**3 * (1.0/4.0) * (2.0 - q)**3
+				
+			s += m[j] * WIij
+
+		rho[i-nbeg] = s
+
+	return rho
 
 
 
@@ -187,8 +251,6 @@ def getAcc_sph(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
 	
-	#gWx, gWy, gWz = gradW_I((pos, h))
-	
 	ax = np.zeros(N)
 	ay = np.zeros(N)
 	az = np.zeros(N)
@@ -266,41 +328,86 @@ def getAcc_sph(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 
 
-#===== getAcc_sph
+#===== getAcc_sph_mpi
 @njit
-def getAcc_sphXXX(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
+def getAcc_sph_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
 	
-	gWx, gWy, gWz = gradW_I((pos, h))
+	M = nend - nbeg
 	
-	ax = np.zeros(N)
-	ay = np.zeros(N)
-	az = np.zeros(N)
+	ax = np.zeros(M)
+	ay = np.zeros(M)
+	az = np.zeros(M)
 
-	for i in range(N):
+	for i in range(nbeg, nend):
 	
 		axt = 0.0
 		ayt = 0.0
 		azt = 0.0
 		for j in range(N):
+		
+			#----- gradW section -----
+			dx = pos[i, 0] - pos[j, 0]
+			dy = pos[i, 1] - pos[j, 1]
+			dz = pos[i, 2] - pos[j, 2]
+			rr = np.sqrt(dx**2 + dy**2 + dz**2)
 			
-			axt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWx[i][j]
-			ayt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWy[i][j]
-			azt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij[i][j]) * gWz[i][j]
+			sig = 1.0/np.pi
+			hij = 0.5 * (h[i] + h[j])
+			q = rr / hij
+			
+			gWx = gWy = gWz = 0.0 # in case none of the following two if conditions satisfies !
+			
+			if q <= 1.0:
+			
+				nW = sig/hij**5 * (-3.0 + 9.0/4.0 * q)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+				
+			if (q > 1.0) & (q <= 2.0):
+				
+				nW = -3.0*sig/4.0/hij**5 * (2.0 - q)**2 / (q+1e-20)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+			#-------------------------
+			
+			#--------- PIij ----------
+			vxij = v[i, 0] - v[j, 0]
+			vyij = v[i, 1] - v[j, 1]
+			vzij = v[i, 2] - v[j, 2]
+			
+			vij_rij = vxij*dx + vyij*dy + vzij*dz
+			
+			cij = 0.5 * (c[i] + c[j])
+			
+			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
+			
+			rhoij = 0.5 * (rho[i] + rho[j])
+			
+			PIij = 0.0
+			if vij_rij <=0:
+			
+				PIij = (-alpha * cij * muij + beta * muij*muij) / rhoij
+			#-------------------------
+			
+			axt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij) * gWx
+			ayt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij) * gWy
+			azt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij) * gWz
 	
-		ax[i] = axt
-		ay[i] = ayt
-		az[i] = azt
+		ax[i-nbeg] = axt
+		ay[i-nbeg] = ayt
+		az[i-nbeg] = azt
 	
-	ax = ax.reshape((N, 1))
-	ay = ay.reshape((N, 1))
-	az = az.reshape((N, 1))
+	ax = ax.reshape((M, 1))
+	ay = ay.reshape((M, 1))
+	az = az.reshape((M, 1))
 	
 	a = np.hstack((ax, ay, az))
 
 	return a
-	
 
 
 
@@ -309,8 +416,6 @@ def getAcc_sphXXX(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
 def get_dU(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
-	
-	#gWxn, gWyn, gWzn = gradW_I((pos, h))
 	
 	dudt = np.zeros(N)
 
@@ -376,32 +481,72 @@ def get_dU(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 
 
-
-#===== get_dU
+#===== get_dU_mpi
 @njit
-def get_dUXXXX(pos, v, rho, P, PIij, h, m, gama, eta, alpha, beta):
+def get_dU_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
-	
-	gWx, gWy, gWz = gradW_I((pos, h))
-	
-	dudt = np.zeros(N)
+	M = nend - nbeg
+	dudt = np.zeros(M)
 
-	for i in range(N):
+	for i in range(nbeg, nend):
 		du_t = 0.0
 		for j in range(N):
+		
+			#----- gradW section -----
+			dx = pos[i, 0] - pos[j, 0]
+			dy = pos[i, 1] - pos[j, 1]
+			dz = pos[i, 2] - pos[j, 2]
+			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			
+			sig = 1.0/np.pi
+			hij = 0.5 * (h[i] + h[j])
+			q = rr / hij
+			
+			gWx = gWy = gWz = 0.0 # in case none of the following two if conditions satisfies !
+			
+			if q <= 1.0:
+			
+				nW = sig/hij**5 * (-3.0 + 9.0/4.0 * q)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+				
+			if (q > 1.0) & (q <= 2.0):
+				
+				nW = -3.0*sig/4.0/hij**5 * (2.0 - q)**2 / (q+1e-20)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+			#-------------------------
 		
 			vxij = v[i, 0] - v[j, 0]
 			vyij = v[i, 1] - v[j, 1]
 			vzij = v[i, 2] - v[j, 2]
 			
-			vij_gWij = vxij*gWx[i][j] + vyij*gWy[i][j] + vzij*gWz[i][j]
+			vij_gWij = vxij*gWx + vyij*gWy + vzij*gWz
 			
-			du_t += m[j] * (P[i]/rho[i]**2 + PIij[i][j]/2.) * vij_gWij
+			#--------- PIij ----------
+			vij_rij = vxij*dx + vyij*dy + vzij*dz
+			
+			cij = 0.5 * (c[i] + c[j])
+			
+			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
+			
+			rhoij = 0.5 * (rho[i] + rho[j])
+			
+			PIij = 0.0
+			if vij_rij <=0:
+			
+				PIij = (-alpha * cij * muij + beta * muij*muij) / rhoij
+			#-------------------------
+			
+			du_t += m[j] * (P[i]/rho[i]**2 + PIij/2.) * vij_gWij
 
-		dudt[i] = du_t
+		dudt[i-nbeg] = du_t
 		
 	return dudt
+
 
 
 
@@ -460,26 +605,69 @@ def getPE(pos, m, G, epsilon):
 	return PE
 
 
-
 #===== getAcc_g_smth
 @njit
 def getAcc_g_smth(pos, mass, G, epsilon):
 
 	N = pos.shape[0]
 	field = np.zeros_like(pos)
-	dx = np.empty(3)
-	fk = 0.0
 
 	for i in range(N):
+
 		for j in range(i+1, N):
-			rr = 0.0
-			for k in range(3):
+
+			dx = pos[j, 0] - pos[i, 0]
+			dy = pos[j, 1] - pos[i, 1]
+			dz = pos[j, 2] - pos[i, 2]
 			
-				dx[k] = pos[j, k] - pos[i, k]
-				rr += dx[k]**2
+			rr = (dx*dx + dy*dy + dz*dz)**0.5
+
+			inv_r3 = 1.0 / rr**3
+
+			epsilonij = 0.5 * (epsilon[i] + epsilon[j])
+			q = rr / epsilonij
+			
+			if q <= 1.0:
+				fk = (1.0/epsilonij**3) * ( (4.0/3.0) - (6.0/5.0)*q**2 + (1.0/2.0)*q**3 )
+
+			if (q > 1.) and (q <= 2.):
+				fk = inv_r3 * ( (-1.0/15.0) + (8.0/3.0)*q**3 - 3.0*q**4 + (6.0/5.0)*q**5 - (1.0/6.0)*q**6 )
+
+			if q > 2.:
+				fk = inv_r3
+
+			field[i, 0] += G * fk * dx * mass[j]
+			field[j, 0] -= G * fk * dx * mass[i]
+			
+			field[i, 1] += G * fk * dy * mass[j]
+			field[j, 1] -= G * fk * dy * mass[i]
+			
+			field[i, 2] += G * fk * dz * mass[j]
+			field[j, 2] -= G * fk * dz * mass[i]
+	return field
+
+
+
+
+#===== getAcc_g_smth_mpi
+@njit
+def getAcc_g_smth_mpi(nbeg, nend, pos, mass, G, epsilon):
+
+	N = pos.shape[0]
+	M = nend - nbeg
+	field = np.zeros((M, 3))
+
+	for i in range(nbeg, nend):
+
+		for j in range(N):
+		
+			if i != j:
+		
+				dx = pos[i, 0] - pos[j, 0]
+				dy = pos[i, 1] - pos[j, 1]
+				dz = pos[i, 2] - pos[j, 2]
 				
-			rr = np.sqrt(rr)
-			for k in range(3):
+				rr = (dx*dx + dy*dy + dz*dz)**0.5
 
 				inv_r3 = 1.0 / rr**3
 
@@ -495,9 +683,54 @@ def getAcc_g_smth(pos, mass, G, epsilon):
 				if q > 2.:
 					fk = inv_r3
 
-				field[i, k] += G * fk * dx[k] * mass[j]
-				field[j, k] -= G * fk * dx[k] * mass[i]
+				field[i-nbeg, 0] -= G * fk * dx * mass[j]
+				field[i-nbeg, 1] -= G * fk * dy * mass[j]				
+				field[i-nbeg, 2] -= G * fk * dz * mass[j]
+
 	return field
+
+
+
+
+#===== getAcc_g_smth_mpi
+@njit
+def getAcc_g_smthx(pos, mass, G, epsilon):
+
+	N = pos.shape[0]
+	field = np.zeros_like(pos)
+
+	for i in range(N):
+
+		for j in range(N):
+		
+			if i != j:
+		
+				dx = pos[i, 0] - pos[j, 0]
+				dy = pos[i, 1] - pos[j, 1]
+				dz = pos[i, 2] - pos[j, 2]
+				
+				rr = (dx*dx + dy*dy + dz*dz)**0.5
+
+				inv_r3 = 1.0 / rr**3
+
+				epsilonij = 0.5 * (epsilon[i] + epsilon[j])
+				q = rr / epsilonij
+				
+				if q <= 1.0:
+					fk = (1.0/epsilonij**3) * ( (4.0/3.0) - (6.0/5.0)*q**2 + (1.0/2.0)*q**3 )
+
+				if (q > 1.) and (q <= 2.):
+					fk = inv_r3 * ( (-1.0/15.0) + (8.0/3.0)*q**3 - 3.0*q**4 + (6.0/5.0)*q**5 - (1.0/6.0)*q**6 )
+
+				if q > 2.:
+					fk = inv_r3
+
+				field[i, 0] -= G * fk * dx * mass[j]
+				field[i, 1] -= G * fk * dy * mass[j]				
+				field[i, 2] -= G * fk * dz * mass[j]
+
+	return field
+
 
 
 
@@ -628,201 +861,50 @@ def h_smooth_fast(pos, h):
 
 
 
-np.random.seed(42)
+#===== h_smooth_fast_mpi 
+@njit
+def h_smooth_fast_mpi(nbeg, nend, pos, h):
 
-#---- Constants -----------
-eta = 0.1
-gama = 5.0/3.0
-alpha = 1.0
-beta = 2.0
-G = 1.0
-#---------------------------
-t = 0.0
-dt = 0.001
-tEnd = 3.0
-Nt = int(np.ceil(tEnd/dt)+1)
+	N = pos.shape[0]
 
-
-filz = np.sort(os.listdir('./Outputs'))
-try:
-	for k in range(len(filz)):
-		os.remove('./Outputs/' + filz[k])
-except:
-	pass
-
-
-with open('Evrard_7208.pkl', 'rb') as f:   # !!!!!! Change epsilon
-    res = pickle.load(f)
-resx = res['x'].reshape((len(res['x']),1))
-resy = res['y'].reshape((len(res['x']),1))
-resz = res['z'].reshape((len(res['x']),1))
-
-print('The file is read .....')
-print()
-
-rSPH = np.hstack((resx, resy, resz))
-rDM = rSPH.copy()
-N = len(rSPH)
-
-epsilonSPH = np.zeros(N) + 0.06
-#epsilonDM = np.zeros((1, N)) + 0.20
-epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
-
-
-MSPH = 1.0 # total gas mass
-#MDM = 0.9 # total DM mass
-
-rr = np.sqrt(resx**2 + resy**2 + resz**2).reshape((1, N))
-omega = 0.5 # angular velocity.
-vel = rr * omega
-
-sin_T = resy.T / rr
-cos_T = resx.T / rr
-
-vx = np.abs(vel * sin_T)
-vy = np.abs(vel * cos_T)
-vz = 0.0 * vx
-
-
-nregA = (resx.T >= 0.0) & (resy.T >= 0.0)
-vx[nregA] = -vx[nregA]
-
-nregB = (resx.T < 0.0) & (resy.T >= 0.0)
-vx[nregB] = -vx[nregB]
-vy[nregB] = -vy[nregB]
-
-nregC = (resx.T < 0.0) & (resy.T < 0.0)
-vy[nregC] = -vy[nregC]
-
-vSPH = np.hstack((vx.T, vy.T, vz.T))
-vDM = vSPH.copy()
-
-uFloor = 0.05 #0.00245 # This is also the initial u.   NOTE to change this in 'do_sth' function too !!!!!!!!!!!!!!!!!!!!!
-u = np.zeros(N) + uFloor # 0.0002405 is equivalent to T = 1e3 K
-
-#h = smooth_h(rSPH)                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-h = do_smoothingX((rSPH, rSPH))  # This plays the role of the initial h so that the code can start !
-h = h_smooth_fast(rSPH, h)
-mSPH = np.zeros(N) + MSPH/N
-#mDM = np.zeros((1, N)) + MDM/N
-
-r = rSPH #np.vstack((rSPH, rDM))
-v = 0.0 * vSPH #np.vstack((vSPH, vDM))
-m = mSPH #np.hstack((mSPH, mDM))
-
-rho = getDensity(r[:N, :], r[:N, :], mSPH, h)
-
-TG = time.time()
-acc_g = getAcc_g_smth(r, m, G, epsilon)
-print('TG = ', time.time() - TG)
-
-P = getPressure(rho, u, gama)
-c = np.sqrt(gama * (gama - 1.0) * u)
-#PIij = PI_ij(r, v, rho, c, m, h, eta, alpha, beta)
-acc_sph = getAcc_sph(rSPH, vSPH, rho, P, c, h, m, gama, eta, alpha, beta)
-acc = acc_g.copy()
-acc[:N, :] = acc[:N, :] + acc_sph
-
-KE = getKE(v, m)
-PE = getPE(r, m, G, epsilon)
-KE_save = np.zeros((Nt+1))
-PE_save = np.zeros((Nt+1))
-KE_save[0] = KE
-PE_save[0] = PE
-
-U_save = np.zeros(Nt+1)
-U_tot = np.sum(m * u)
-U_save[0] = U_tot
-t_all = np.arange(Nt+1)*dt
-
-t = 0.0
-
-u_previous = u.copy()
-uold = u.copy()
-ut = get_dU(r[:N, :], v[:N, :], rho, P, c, h, m, gama, eta, alpha, beta)
-ut_previous = ut.copy()
-
-TA = time.time()
-
-i = 0
-
-while t < tEnd:
-
-	TB = time.time()
+	Nth_up = 50 + 10.
+	Nth_low = 50 - 10.
 	
-	v += acc * dt/2.0
-
-	r += v * dt
-
-	T1 = time.time()
-	#h = smooth_h(r[:N, :])
-	#h = do_smoothingX((r[:N, :], r[:N, :]))
-	h = h_smooth_fast(r[:N, :], h)
-	print('T1 = ', time.time() - T1)
+	n_Max_iteration = 100
 	
-	T2 = time.time()
-	rho = getDensity(r[:N, :], r[:N, :], mSPH, h)
-	print('T2 = ', time.time() - T2)
-
-	TG = time.time()
-	acc_g = getAcc_g_smth(r, m, G, epsilon)
-	print('TG = ', time.time() - TG)
+	M = nend - nbeg
 	
-	
-	TP = time.time()
-	P = getPressure(rho, u, gama)
-	c = np.sqrt(gama * (gama - 1.0) * u)
-	#PIij = PI_ij(r[:N, :], v[:N, :], rho, c, m, h, eta, alpha, beta)
-	print('TP = ', time.time() - TP)
-	T4 = time.time()
-	ut = get_dU(r[:N, :], v[:N, :], rho, P, c, h, m, gama, eta, alpha, beta)
-	print('T4 = ', time.time() - T4)
-	uold += dt * ut
-	u = u_previous + 0.5 * dt * (ut + ut_previous)
+	hres = np.zeros(int(M))
 
-	#print('ut = ', np.sort(ut))
+	for i in range(nbeg, nend):
 
-	u_previous = u.copy()
-	ut_previous = ut.copy()
+		hi = h[i]
+		dist = np.zeros(N)
 
-	T5 = time.time()
-	acc_sph = getAcc_sph(r[:N, :], v[:N, :], rho, P, c, h, m, gama, eta, alpha, beta)
-	print('T5 = ', time.time() - T5)
-	acc = acc_g.copy()
-	acc[:N, :] = acc[:N, :] + acc_sph
+		for j in range(N):
 
-	T6 = time.time()
-	KE = getKE(v, m)
-	PE = getPE(r, m, G, epsilon)
-	print('T6 = ', time.time() - T6)
-	KE_save[i+1] = KE
-	PE_save[i+1] = PE
-	
-	U_tot = np.sum(m * u)
-	U_save[i+1] = U_tot
+			dx = pos[j, 0] - pos[i, 0]
+			dy = pos[j, 1] - pos[i, 1]
+			dz = pos[j, 2] - pos[i, 2]
+			dist[j] = (dx*dx + dy*dy + dz*dz)**0.5
 
-	v += acc * dt/2.0
-	
-	print('Current time = ', t)
-	print('sorted h/c = ', np.sort(h/c))
+		Nngb = np.sum(dist < 2.0*hi)
 
-	t += dt
-	
-	i += 1
+		while (Nngb > Nth_up) or (Nngb < Nth_low):
+		
+			if Nngb > Nth_up:
 
-	dictx = {'pos': r, 'v': v, 'm': m, 'uDirectcool': u, 'dt': dt, 'current_t': t, 'rho': rho}
-	with open('./Outputs/' + str(i).zfill(5) + '.pkl', 'wb') as f:
-		pickle.dump(dictx, f)
-	
-	print('Loop time = ', time.time() - TB)
-	print()
+				hi -= 0.003 * hi
 
-E_Dictx = {'U': U_save, 'PE': PE_save, 'KE': KE_save, 't': t_all}
-with open('Energy.pkl', 'wb') as f:
-	pickle.dump(E_Dictx, f)
+			if Nngb < Nth_low:
+				
+				hi += 0.003 * hi
 
-print('elapsed time = ', time.time() - TA)
+			Nngb = np.sum(dist < 2.0*hi)
 
+		hres[i-nbeg] = hi
+
+	return hres
 
 
 
