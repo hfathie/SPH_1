@@ -1,4 +1,5 @@
 
+# modified to be used with any number of CPUs.
 # New h algorithm is employed !
 # The difference with augsphx6.4.py is that here we also use epsilonij instead of epsilon
 # The difference with augsphx6.3.py is that here we use hij instead of h
@@ -41,7 +42,7 @@ except:
 	pass
 
 
-with open('Evrard_24464.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_1472.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
@@ -54,7 +55,7 @@ rSPH = np.hstack((resx, resy, resz))
 rDM = rSPH.copy()
 N = len(rSPH)
 
-epsilonSPH = np.zeros(N) + 0.04
+epsilonSPH = np.zeros(N) + 0.10
 #epsilonDM = np.zeros((1, N)) + 0.20
 epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
 
@@ -117,7 +118,7 @@ t_all = np.arange(Nt+1)*dt
 t = 0.0
 
 u_previous = u.copy()
-uold = u.copy()
+#uold = u.copy()
 ut = get_dU(r, v, rho, P, c, h, m, gama, eta, alpha, beta)
 ut_previous = ut.copy()
 
@@ -125,10 +126,18 @@ TA = time.time()
 
 ii = 0
 
-Nstp = r.shape[0]/nCPUs ##### Note: for now nCPUs MUST be 4 because 5616 is divisible by 4 !!!!!!
+N = r.shape[0]
 
-nbeg = int(rank * Nstp)
-nend = int(nbeg + Nstp)
+count = N // nCPUs ##### Note: for now nCPUs MUST be 4 because 5616 is divisible by 4 !!!!!!
+remainder = N % nCPUs
+
+if rank < remainder:
+	nbeg = rank * (count + 1)
+	nend = nbeg + count + 1
+else:
+	nbeg = rank * count + remainder
+	nend = nbeg + count
+
 
 while t < tEnd:
 
@@ -175,7 +184,7 @@ while t < tEnd:
 	rho = comm.bcast(rho, root = 0)	
 	#----------------------
 	
-	#------- acc_g -------- I Suspect !
+	#------- acc_g --------
 	local_acc_g = getAcc_g_smth_mpi(nbeg, nend, r, m, G, epsilon)
 	
 	if rank == 0:
@@ -220,11 +229,23 @@ while t < tEnd:
 	#----------------------
 
 	#--------- u ----------
-	if rank == 0:
-		u += dt * ut
-	u = comm.bcast(u, root=0)
+	#if rank == 0:
+	#	u += dt * ut
+	#u = comm.bcast(u, root=0)
 	#----------------------
+	
+	#--------- u ----------
+	if rank == 0:
+		u = u_previous + 0.5 * dt * (ut + ut_previous)
 
+		u_previous = u.copy() # since u_previous and ut_previous is only used in rank = 0, we do not need to broadcast them.
+		ut_previous = ut.copy()
+	
+	u = comm.bcast(u, root=0)
+	u_previous = comm.bcast(u_previous, root=0)
+	ut_previous = comm.bcast(ut_previous, root=0)
+	#----------------------
+	
 
 	#------ acc_sph -------
 	local_acc_sph = getAcc_sph_mpi(nbeg, nend, r, v, rho, P, c, h, m, gama, eta, alpha, beta)
@@ -255,6 +276,10 @@ while t < tEnd:
 	#----------------------
 	
 	t += dt
+	
+	if rank == 0:
+		if not (ii%50):
+			print('h/c = ', np.sort(h/c))
 
 	if rank == 0:
 		ii += 1

@@ -91,7 +91,7 @@ gamma = 5./3.
 
 
 
-j = 700
+j = 434
 
 with open('./Outputs/' + filez[j], 'rb') as f:
 	dictx = pickle.load(f)
@@ -101,6 +101,9 @@ r = dictx['pos']
 rx = r[:, 0]
 ry = r[:, 1]
 rz = r[:, 2]
+
+plt.scatter(rx, ry, s = 1)
+plt.show()
 
 rho = dictx['rho']
 P = dictx['P']

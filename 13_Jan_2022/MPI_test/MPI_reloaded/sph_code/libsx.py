@@ -4,80 +4,8 @@ import matplotlib.pyplot as plt
 import time
 import pickle
 import os
-#from cool_libs import *
 from numba import jit, njit
 import concurrent.futures
-
-#===== W_I
-@njit
-def W_I(posz): # posz is a tuple containg two arrays: r and h.
-
-	pos = posz[0]
-	h = posz[1]
-	N = pos.shape[0]
-	
-	WI = np.zeros((N, N))
-
-	for i in range(N):
-		for j in range(N):
-
-			dx = pos[i, 0] - pos[j, 0]
-			dy = pos[i, 1] - pos[j, 1]
-			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
-			
-			hij = 0.5 * (h[i] + h[j])
-
-			sig = 1.0/np.pi
-			q = rr / hij
-			
-			if q <= 1.0:
-				WI[i][j] = sig / hij**3 * (1.0 - (3.0/2.0)*q**2 + (3.0/4.0)*q**3)
-
-			if (q > 1.0) and (q <= 2.0):
-				WI[i][j] = sig / hij**3 * (1.0/4.0) * (2.0 - q)**3
-
-	return  WI
-
-
-#===== gradW_I
-@njit
-def gradW_I(posz): # posz is a tuple containg two arrays: r and h.
-
-	pos = posz[0]
-	h = posz[1]
-	N = pos.shape[0]
-	
-	gWx = np.zeros((N, N))
-	gWy = np.zeros((N, N))
-	gWz = np.zeros((N, N))
-
-	for i in range(N):
-		for j in range(N):
-
-			dx = pos[i, 0] - pos[j, 0]
-			dy = pos[i, 1] - pos[j, 1]
-			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
-
-			sig = 1.0/np.pi
-			hij = 0.5 * (h[i] + h[j])
-			q = rr / hij
-			
-			if q <= 1.0:
-				nW = sig/hij**5 * (-3.0 + 9.0/4.0 * q)
-				gWx[i][j] = nW * dx
-				gWy[i][j] = nW * dy
-				gWz[i][j] = nW * dz
-
-			if (q > 1.0) & (q <= 2.0):
-				nW = -3.0*sig/4.0/hij**5 * (2.0 - q)**2 / (q+1e-20)
-				gWx[i][j] = nW * dx
-				gWy[i][j] = nW * dy
-				gWz[i][j] = nW * dz
-
-	return gWx, gWy, gWz
-
 
 
 #===== getDensityx
@@ -96,7 +24,7 @@ def getDensity(pos, m, h):  # You may want to change your Kernel !!
 			dx = pos[i, 0] - pos[j, 0]
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			rr = (dx**2 + dy**2 + dz**2)**0.5
 			
 			hij = 0.5 * (h[i] + h[j])
 
@@ -138,7 +66,7 @@ def getDensity_mpi(nbeg, nend, pos, m, h):  # You may want to change your Kernel
 			dx = pos[i, 0] - pos[j, 0]
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			rr = (dx**2 + dy**2 + dz**2)**0.5
 			
 			hij = 0.5 * (h[i] + h[j])
 
@@ -162,80 +90,6 @@ def getDensity_mpi(nbeg, nend, pos, m, h):  # You may want to change your Kernel
 
 
 
-#===== Standard PI_ij (Monaghan & Gingold 1983)
-@njit
-def PI_ij(pos, v, rho, c, m, h, eta, alpha, beta):
-
-	N = pos.shape[0]
-	
-	PIij = np.zeros((N, N))
-
-	for i in range(N):
-
-		for j in range(N):
-		
-			rijx = pos[i, 0] - pos[j, 0]
-			rijy = pos[i, 1] - pos[j, 1]
-			rijz = pos[i, 2] - pos[j, 2]
-			
-			vijx = v[i, 0] - v[j, 0]
-			vijy = v[i, 1] - v[j, 1]
-			vijz = v[i, 2] - v[j, 2]
-			
-			vij_rij = vijx*rijx + vijy*rijy + vijz*rijz
-			
-			rr = np.sqrt(rijx**2 + rijy**2 + rijz**2)
-			
-			hij = 0.5 * (h[i] + h[j])
-			rhoij = 0.5 * (rho[i] + rho[j])
-			cij = 0.5 * (c[i] + c[j])
-			
-			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
-			
-			if vij_rij <=0:
-			
-				PIij[i][j] = (-alpha * cij * muij + beta * muij*muij) / rhoij
-
-	return PIij
-
-
-
-
-#===== PI_ij as in Gadget 2.0 or 4.0
-@njit
-def PI_ijXXXXXX(pos, v, rho, c, m, h, eta, alpha, beta):
-
-	N = pos.shape[0]
-	
-	PIij = np.zeros((N, N))
-
-	for i in range(N):
-		for j in range(N):
-		
-			rijx = pos[i, 0] - pos[j, 0]
-			rijy = pos[i, 1] - pos[j, 1]
-			rijz = pos[i, 2] - pos[j, 2]
-			
-			vijx = v[i, 0] - v[j, 0]
-			vijy = v[i, 1] - v[j, 1]
-			vijz = v[i, 2] - v[j, 2]
-			
-			vij_rij = vijx*rijx + vijy*rijy + vijz*rijz
-			
-			rr = np.sqrt(rijx**2 + rijy**2 + rijz**2)
-			
-			wij = vij_rij / (rr+1e-15)
-			vij_sig = c[i] + c[j] - 3.0 * wij
-			rhoij = 0.5 * (rho[i] + rho[j])
-			
-			if vij_rij < 0:
-			
-				PIij[i][j] = -0.5 * alpha * vij_sig * wij / rhoij
-
-	return PIij
-
-
-
 #===== getPressure
 def getPressure(rho, u, gama):
 
@@ -245,7 +99,7 @@ def getPressure(rho, u, gama):
     
 
 
-#===== getAcc_sph
+#===== getAcc_sph (Non-parallel) (with Gadget 2.0 and 4.0 PIij)
 @njit
 def getAcc_sph(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
@@ -266,7 +120,7 @@ def getAcc_sph(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 			dx = pos[i, 0] - pos[j, 0]
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			rr = (dx**2 + dy**2 + dz**2)**0.5
 			
 			sig = 1.0/np.pi
 			hij = 0.5 * (h[i] + h[j])
@@ -298,14 +152,14 @@ def getAcc_sph(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 			
 			cij = 0.5 * (c[i] + c[j])
 			
-			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
-			
+			wij = vij_rij / (rr+1e-5)
+			vij_sig = c[i] + c[j] - 3.0 * wij
 			rhoij = 0.5 * (rho[i] + rho[j])
 			
 			PIij = 0.0
-			if vij_rij <=0:
+			if vij_rij <= 0:
 			
-				PIij = (-alpha * cij * muij + beta * muij*muij) / rhoij
+				PIij = -0.5 * alpha * vij_sig * wij / rhoij
 			#-------------------------
 			
 			axt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij) * gWx
@@ -328,9 +182,9 @@ def getAcc_sph(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 
 
-#===== getAcc_sph_mpi
+#===== getAcc_sph_mpi (with Standard PI_ij (Monaghan & Gingold 1983))
 @njit
-def getAcc_sph_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
+def getAcc_sph_mpiXXX(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
 	
@@ -351,7 +205,7 @@ def getAcc_sph_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 			dx = pos[i, 0] - pos[j, 0]
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			rr = (dx**2 + dy**2 + dz**2)**0.5
 			
 			sig = 1.0/np.pi
 			hij = 0.5 * (h[i] + h[j])
@@ -411,7 +265,94 @@ def getAcc_sph_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 
 
-#===== get_dU
+
+
+#===== getAcc_sph_mpi (with PI_ij as in Gadget 2.0 or 4.0)
+@njit
+def getAcc_sph_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
+
+	N = pos.shape[0]
+	
+	M = nend - nbeg
+	
+	ax = np.zeros(M)
+	ay = np.zeros(M)
+	az = np.zeros(M)
+
+	for i in range(nbeg, nend):
+	
+		axt = 0.0
+		ayt = 0.0
+		azt = 0.0
+		for j in range(N):
+		
+			#----- gradW section -----
+			dx = pos[i, 0] - pos[j, 0]
+			dy = pos[i, 1] - pos[j, 1]
+			dz = pos[i, 2] - pos[j, 2]
+			rr = (dx**2 + dy**2 + dz**2)**0.5
+			
+			sig = 1.0/np.pi
+			hij = 0.5 * (h[i] + h[j])
+			q = rr / hij
+			
+			gWx = gWy = gWz = 0.0 # in case none of the following two if conditions satisfies !
+			
+			if q <= 1.0:
+			
+				nW = sig/hij**5 * (-3.0 + 9.0/4.0 * q)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+				
+			if (q > 1.0) & (q <= 2.0):
+				
+				nW = -3.0*sig/4.0/hij**5 * (2.0 - q)**2 / (q+1e-20)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+			#-------------------------
+			
+			#--------- PIij ----------
+			vxij = v[i, 0] - v[j, 0]
+			vyij = v[i, 1] - v[j, 1]
+			vzij = v[i, 2] - v[j, 2]
+			
+			vij_rij = vxij*dx + vyij*dy + vzij*dz
+			
+			cij = 0.5 * (c[i] + c[j])
+			
+			wij = vij_rij / (rr+1e-5)
+			vij_sig = c[i] + c[j] - 3.0 * wij
+			rhoij = 0.5 * (rho[i] + rho[j])
+			
+			PIij = 0.0
+			if vij_rij <= 0:
+			
+				PIij = -0.5 * alpha * vij_sig * wij / rhoij
+			#-------------------------
+			
+			axt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij) * gWx
+			ayt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij) * gWy
+			azt -= m[j] * (P[i]/rho[i]**2 + P[j]/rho[j]**2 + PIij) * gWz
+	
+		ax[i-nbeg] = axt
+		ay[i-nbeg] = ayt
+		az[i-nbeg] = azt
+	
+	ax = ax.reshape((M, 1))
+	ay = ay.reshape((M, 1))
+	az = az.reshape((M, 1))
+	
+	a = np.hstack((ax, ay, az))
+
+	return a
+
+
+
+
+
+#===== get_dU (Non-parallel) (with Gadget 2.0 and 4.0 PIij)
 @njit
 def get_dU(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
@@ -427,7 +368,7 @@ def get_dU(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 			dx = pos[i, 0] - pos[j, 0]
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			rr = (dx**2 + dy**2 + dz**2)**0.5
 			
 			sig = 1.0/np.pi
 			hij = 0.5 * (h[i] + h[j])
@@ -457,18 +398,22 @@ def get_dU(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 			vij_gWij = vxij*gWx + vyij*gWy + vzij*gWz
 			
 			#--------- PIij ----------
+			vxij = v[i, 0] - v[j, 0]
+			vyij = v[i, 1] - v[j, 1]
+			vzij = v[i, 2] - v[j, 2]
+			
 			vij_rij = vxij*dx + vyij*dy + vzij*dz
 			
 			cij = 0.5 * (c[i] + c[j])
 			
-			muij = hij * vij_rij / (rr*rr + hij*hij * eta*eta)
-			
+			wij = vij_rij / (rr+1e-5)
+			vij_sig = c[i] + c[j] - 3.0 * wij
 			rhoij = 0.5 * (rho[i] + rho[j])
 			
 			PIij = 0.0
-			if vij_rij <=0:
+			if vij_rij <= 0:
 			
-				PIij = (-alpha * cij * muij + beta * muij*muij) / rhoij
+				PIij = -0.5 * alpha * vij_sig * wij / rhoij
 			#-------------------------
 			
 			du_t += m[j] * (P[i]/rho[i]**2 + PIij/2.) * vij_gWij
@@ -481,9 +426,9 @@ def get_dU(pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 
 
-#===== get_dU_mpi
+#===== get_dU_mpi (with Standard PI_ij (Monaghan & Gingold 1983))
 @njit
-def get_dU_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
+def get_dU_mpiXXXX(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 	N = pos.shape[0]
 	M = nend - nbeg
@@ -497,7 +442,7 @@ def get_dU_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 			dx = pos[i, 0] - pos[j, 0]
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
-			rr = np.sqrt(dx**2 + dy**2 + dz**2)
+			rr = (dx**2 + dy**2 + dz**2)**0.5
 			
 			sig = 1.0/np.pi
 			hij = 0.5 * (h[i] + h[j])
@@ -550,6 +495,79 @@ def get_dU_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
 
 
 
+#===== get_dU_mpi (with PI_ij as in Gadget 2.0 or 4.0)
+@njit
+def get_dU_mpi(nbeg, nend, pos, v, rho, P, c, h, m, gama, eta, alpha, beta):
+
+	N = pos.shape[0]
+	M = nend - nbeg
+	dudt = np.zeros(M)
+
+	for i in range(nbeg, nend):
+		du_t = 0.0
+		for j in range(N):
+		
+			#----- gradW section -----
+			dx = pos[i, 0] - pos[j, 0]
+			dy = pos[i, 1] - pos[j, 1]
+			dz = pos[i, 2] - pos[j, 2]
+			rr = (dx**2 + dy**2 + dz**2)**0.5
+			
+			sig = 1.0/np.pi
+			hij = 0.5 * (h[i] + h[j])
+			q = rr / hij
+			
+			gWx = gWy = gWz = 0.0 # in case none of the following two if conditions satisfies !
+			
+			if q <= 1.0:
+			
+				nW = sig/hij**5 * (-3.0 + 9.0/4.0 * q)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+				
+			if (q > 1.0) & (q <= 2.0):
+				
+				nW = -3.0*sig/4.0/hij**5 * (2.0 - q)**2 / (q+1e-20)
+				gWx = nW * dx
+				gWy = nW * dy
+				gWz = nW * dz
+			#-------------------------
+		
+			vxij = v[i, 0] - v[j, 0]
+			vyij = v[i, 1] - v[j, 1]
+			vzij = v[i, 2] - v[j, 2]
+			
+			vij_gWij = vxij*gWx + vyij*gWy + vzij*gWz
+			
+			#--------- PIij ----------
+			vxij = v[i, 0] - v[j, 0]
+			vyij = v[i, 1] - v[j, 1]
+			vzij = v[i, 2] - v[j, 2]
+			
+			vij_rij = vxij*dx + vyij*dy + vzij*dz
+			
+			cij = 0.5 * (c[i] + c[j])
+			
+			wij = vij_rij / (rr+1e-5)
+			vij_sig = c[i] + c[j] - 3.0 * wij
+			rhoij = 0.5 * (rho[i] + rho[j])
+			
+			PIij = 0.0
+			if vij_rij <= 0:
+			
+				PIij = -0.5 * alpha * vij_sig * wij / rhoij
+			#-------------------------
+			
+			du_t += m[j] * (P[i]/rho[i]**2 + PIij/2.) * vij_gWij
+
+		dudt[i-nbeg] = du_t
+		
+	return dudt
+
+
+
+
 #===== getKE
 @njit
 def getKE(v, m):
@@ -580,8 +598,7 @@ def getPE(pos, m, G, epsilon):
 			dy = pos[i, 1] - pos[j, 1]
 			dz = pos[i, 2] - pos[j, 2]
 			
-			rr = dx**2 + dy**2 + dz**2				
-			rr = np.sqrt(rr)
+			rr = (dx**2 + dy**2 + dz**2)**0.5				
 			
 			fk = 0.0
 			
@@ -752,64 +769,37 @@ def do_smoothingX(poz):
             dx = pos[j, 0] - subpos[i, 0]
             dy = pos[j, 1] - subpos[i, 1]
             dz = pos[j, 2] - subpos[i, 2]
-            dist[j] = np.sqrt(dx**2 + dy**2 + dz**2)
+            dist[j] = (dx**2 + dy**2 + dz**2)**0.5
 
-        hres.append(np.sort(dist)[64])
+        hres.append(np.sort(dist)[50])
 
     return np.array(hres) * 0.5
 
 
 
 
-#===== smooth_hX
+#===== smoothing_length_mpi (same as do_smoothingX but modified fpr MPI)
 @njit
-def do_smoothing(poz):
+def smoothing_length_mpi(nbeg, nend, pos):
 
-    pos = poz[0]
-    subpos = poz[1]
-
-    N = pos.shape[0]
-    M = subpos.shape[0]
-    hres = []
-
-    for i in range(M):
-        dist = np.zeros(N)
-        for j in range(N):
-        
-            dx = pos[j, 0] - subpos[i, 0]
-            dy = pos[j, 1] - subpos[i, 1]
-            dz = pos[j, 2] - subpos[i, 2]
-            dist[j] = np.sqrt(dx**2 + dy**2 + dz**2)
-
-        hres.append(np.sort(dist)[50])
-
-    return hres
-
-
-#===== smoothing_in_parallel
-def smooth_h(pos):
-
-	nCPUs = 6
 	N = pos.shape[0]
-	lenx = int(N / nCPUs)
-	posez = []
+	M = nend - nbeg
+	hres = np.zeros(M)
 
-	for k in range(nCPUs - 1):
-		posez.append((pos, pos[(k*lenx):((k+1)*lenx), :]))
-	posez.append((pos, pos[((nCPUs-1)*lenx):, :]))
-		
-	with concurrent.futures.ProcessPoolExecutor() as executor:
-		
-		res = executor.map(do_smoothing, posez)
-		
-		out = []
-		for ff in res:
+	for i in range(nbeg, nend):
 
-			out += ff
-		
-	out = np.array(out) * 0.5
-	
-	return out
+		dist = np.zeros(N)
+
+		for j in range(N):
+
+		    dx = pos[j, 0] - pos[i, 0]
+		    dy = pos[j, 1] - pos[i, 1]
+		    dz = pos[j, 2] - pos[i, 2]
+		    dist[j] = (dx**2 + dy**2 + dz**2)**0.5
+
+		hres[i-nbeg] = np.sort(dist)[50]
+
+	return hres * 0.5
 
 
 
@@ -819,8 +809,8 @@ def h_smooth_fast(pos, h):
 
 	N = pos.shape[0]
 
-	Nth_up = 50 + 10.
-	Nth_low = 50 - 10.
+	Nth_up = 50 + 5
+	Nth_low = 50 - 5
 
 	hres = np.zeros_like(h)
 	
@@ -867,8 +857,8 @@ def h_smooth_fast_mpi(nbeg, nend, pos, h):
 
 	N = pos.shape[0]
 
-	Nth_up = 50 + 10.
-	Nth_low = 50 - 10.
+	Nth_up = 50 + 10
+	Nth_low = 50 - 10
 	
 	n_Max_iteration = 100
 	
@@ -890,6 +880,8 @@ def h_smooth_fast_mpi(nbeg, nend, pos, h):
 
 		Nngb = np.sum(dist < 2.0*hi)
 
+		niter = 0
+
 		while (Nngb > Nth_up) or (Nngb < Nth_low):
 		
 			if Nngb > Nth_up:
@@ -901,6 +893,11 @@ def h_smooth_fast_mpi(nbeg, nend, pos, h):
 				hi += 0.003 * hi
 
 			Nngb = np.sum(dist < 2.0*hi)
+			
+			niter += 1
+			
+			if niter > n_Max_iteration:
+				print('!!!!!! Maximum iteration in h computation reached !!!!!!')
 
 		hres[i-nbeg] = hi
 

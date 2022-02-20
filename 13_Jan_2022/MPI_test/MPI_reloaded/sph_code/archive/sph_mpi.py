@@ -36,7 +36,7 @@ except:
 	pass
 
 
-with open('Evrard_24464.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_1472.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
@@ -49,7 +49,7 @@ rSPH = np.hstack((resx, resy, resz))
 rDM = rSPH.copy()
 N = len(rSPH)
 
-epsilonSPH = np.zeros(N) + 0.04
+epsilonSPH = np.zeros(N) + 0.10
 #epsilonDM = np.zeros((1, N)) + 0.20
 epsilon = epsilonSPH #np.hstack((epsilonSPH, epsilonDM))
 
@@ -130,7 +130,8 @@ while t < tEnd:
 	r += v * dt
 
 	T1 = time.time()
-	h = h_smooth_fast(r, h)
+	#h = h_smooth_fast(r, h)
+	h = do_smoothingX((r, r))
 	print('T1 = ', time.time() - T1)
 
 	
@@ -138,15 +139,15 @@ while t < tEnd:
 	rho = getDensity(r, m, h)
 	print('T2 = ', time.time() - T2)
 
-	#TG1 = time.time()
-	#acc_g = getAcc_g_smth(r, m, G, epsilon)
-	#print('TG1 = ', time.time() - TG1)
+	TG1 = time.time()
+	acc_g = getAcc_g_smth(r, m, G, epsilon)
+	print('TG1 = ', time.time() - TG1)
 
-	TG = time.time()
-	acc_g = getAcc_g_smthx(r, m, G, epsilon)
-	print('TG = ', time.time() - TG)
-	
-	
+	#TG = time.time()
+	#acc_g = getAcc_g_smthx(r, m, G, epsilon)
+	#print('TG = ', time.time() - TG)
+
+
 	TP = time.time()
 	P = getPressure(rho, u, gama)
 	c = np.sqrt(gama * (gama - 1.0) * u)
@@ -155,12 +156,11 @@ while t < tEnd:
 	T4 = time.time()
 	ut = get_dU(r, v, rho, P, c, h, m, gama, eta, alpha, beta)
 	print('T4 = ', time.time() - T4)
-	#uold += dt * ut
-	#u = u_previous + 0.5 * dt * (ut + ut_previous)
-	u += dt * ut
+	uold += dt * ut
+	u = u_previous + 0.5 * dt * (ut + ut_previous)
 
-	#u_previous = u.copy()
-	#ut_previous = ut.copy()
+	u_previous = u.copy()
+	ut_previous = ut.copy()
 
 	T5 = time.time()
 	acc_sph = getAcc_sph(r, v, rho, P, c, h, m, gama, eta, alpha, beta)
