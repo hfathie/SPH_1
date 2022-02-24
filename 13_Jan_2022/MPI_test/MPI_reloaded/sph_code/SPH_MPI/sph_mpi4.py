@@ -26,12 +26,12 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.001
+dt = 0.0005
 tEnd = 3.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
 
-filz = np.sort(os.listdir('./Outputs'))
+filz = np.sort(os.listdir('./Outputs_'))
 try:
 	for k in range(len(filz)):
 		os.remove('./Outputs/' + filz[k])
@@ -39,7 +39,7 @@ except:
 	pass
 
 
-with open('Evrard_1472.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_33552.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
