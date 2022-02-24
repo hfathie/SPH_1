@@ -479,12 +479,12 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.01
+dt = 0.001
 tEnd = 3.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
 
-filz = np.sort(os.listdir('./Outputs_'))
+filz = np.sort(os.listdir('./Outputs'))
 try:
 	for k in range(len(filz)):
 		os.remove('./Outputs/' + filz[k])

@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import pickle
 
 
-N = 26
+N = 34
 
-xL = np.linspace(-0.25, 0, int(N/2))
-xR = np.linspace(0, 0.25, int(N/2))
+xL = np.linspace(-0.40, 0, int(N/2))
+xR = np.linspace(0, 0.40, int(N/2))
 
 
 X = np.concatenate((xL[:-1], xR)) # [:-1] is used to exclude one of the zeros !
