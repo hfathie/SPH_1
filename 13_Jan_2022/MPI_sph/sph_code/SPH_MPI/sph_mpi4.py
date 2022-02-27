@@ -26,12 +26,12 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.001
+dt = 0.0005
 tEnd = 3.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
 
-filz = np.sort(os.listdir('./Outputs'))
+filz = np.sort(os.listdir('./Outputs_'))
 try:
 	for k in range(len(filz)):
 		os.remove('./Outputs/' + filz[k])
@@ -39,7 +39,7 @@ except:
 	pass
 
 
-with open('Evrard_4224.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_33552.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
@@ -63,7 +63,7 @@ else:
 	nend = nbeg + count
 #----------------------------
 
-epsilon = np.zeros(N) + 0.08
+epsilon = np.zeros(N) + 0.005
 
 MSPH = 1.0 # total gas mass
 
@@ -258,7 +258,7 @@ TA = time.time()
 while t < tEnd:
 
 	if rank == 0:
-		TLoop = time.time()
+		TA = time.time()
 
 	#--------- v ----------
 	if rank == 0:
@@ -397,7 +397,7 @@ while t < tEnd:
 			pickle.dump(dictx, f)
 	
 	if rank == 0:
-		print('Loop time = ', time.time() - TLoop)
+		print('Loop time = ', time.time() - TA)
 
 print('elapsed time = ', time.time() - TA)
 
