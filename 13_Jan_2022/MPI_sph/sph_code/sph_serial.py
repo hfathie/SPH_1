@@ -1,8 +1,7 @@
 
 # modified to be used with any number of CPUs.
 # New h algorithm is employed !
-# The difference with augsphx6.4.py is that here we also use epsilonij instead of epsilon
-# The difference with augsphx6.3.py is that here we use hij instead of h
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,7 +21,7 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.0005
+dt = 0.001
 tEnd = 3.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
@@ -35,7 +34,7 @@ except:
 	pass
 
 
-with open('Evrard_33552.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_2176.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
@@ -47,7 +46,7 @@ print()
 r = np.hstack((resx, resy, resz))
 N = r.shape[0]
 
-epsilon = np.zeros(N) + 0.005
+epsilon = np.zeros(N) + 0.10
 
 MSPH = 1.0 # total gas mass
 
@@ -88,7 +87,6 @@ Th1 = time.time()
 h = do_smoothingX((r, r))  # This plays the role of the initial h so that the code can start !
 #----------------------------
 print('Th1 = ', time.time() - Th1)
-
 
 Th2 = time.time()
 #--------- h (main) ---------
@@ -148,7 +146,7 @@ while t < tEnd:
 	#--------- v ----------
 	v += acc * dt/2.0
 	#----------------------
-
+	
 	#--------- r ----------
 	r += v * dt
 	#----------------------
@@ -194,6 +192,12 @@ while t < tEnd:
 	#--------- v ----------
 	v += acc * dt/2.0
 	#----------------------
+	
+	import pandas as pd
+	dictx = {'acc_g': v[:, 0]}
+	dff = pd.DataFrame(dictx)
+	dff.to_csv('Bug.csv')
+	s()
 	
 	t += dt
 	

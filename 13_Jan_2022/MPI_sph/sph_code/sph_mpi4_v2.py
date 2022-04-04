@@ -38,7 +38,7 @@ except:
 	pass
 
 
-with open('Evrard_4224.pkl', 'rb') as f:   # !!!!!! Change epsilon
+with open('Evrard_2176.pkl', 'rb') as f:   # !!!!!! Change epsilon
     res = pickle.load(f)
 resx = res['x'].reshape((len(res['x']),1))
 resy = res['y'].reshape((len(res['x']),1))
@@ -62,7 +62,7 @@ else:
 	nend = nbeg + count
 #----------------------------
 
-epsilon = np.zeros(N) + 0.08
+epsilon = np.zeros(N) + 0.10
 
 MSPH = 1.0 # total gas mass
 
@@ -178,7 +178,7 @@ acc_g = comm.bcast(acc_g, root = 0)
 
 if rank == 0:
 	print('TG = ', time.time() - TG)
-#----------------------	
+#----------------------
 
 #--------- P ----------
 P = 0.0
@@ -265,7 +265,7 @@ while t < tEnd:
 	
 	v = comm.bcast(v, root = 0)
 	#----------------------
-
+	
 	#--------- r ----------
 	if rank == 0:
 		r += v * dt
@@ -388,6 +388,13 @@ while t < tEnd:
 	
 	v = comm.bcast(v, root = 0)
 	#----------------------
+	
+#	if rank == 0:
+#		import pandas as pd
+#		dictx = {'acc_g': v[:, 0]}
+#		dff = pd.DataFrame(dictx)
+#		dff.to_csv('BugMPI.csv')
+#		s()
 	
 	t += dt
 	

@@ -1,8 +1,6 @@
 
 # modified to be used with any number of CPUs.
 # New h algorithm is employed !
-# The difference with augsphx6.4.py is that here we also use epsilonij instead of epsilon
-# The difference with augsphx6.3.py is that here we use hij instead of h
 
 import numpy as np
 import time

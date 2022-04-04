@@ -59,21 +59,21 @@ for j in range(0, len(filz), 1):
 
 	ax.cla()	
 
-	#ax.scatter(y, z, s = 0.05, color = 'black')
+	ax.scatter(y, z, s = 0.05, color = 'black')
 	ax.scatter(yH, zH, s = 0.20, color = 'lime')
 
-	ax.axis(xmin = -3, xmax = 3)
-	ax.axis(ymin = -3, ymax = 3)
+	#ax.axis(xmin = -3, xmax = 3)
+	#ax.axis(ymin = -3, ymax = 3)
 	
-	#ax.axis(xmin = -24, xmax = 24)
-	#ax.axis(ymin = -24, ymax = 24)
+	ax.axis(xmin = -24, xmax = 24)
+	ax.axis(ymin = -24, ymax = 24)
 	
 	ax.set_title('t = ' + str(t))
 
 	fig.canvas.flush_events()
 	time.sleep(0.01)
 
-	if t > 3.80:
+	if t > 4.80:
 		kb = readchar.readkey()
 	
 	if kb == 'q':

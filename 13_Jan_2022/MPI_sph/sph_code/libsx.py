@@ -625,7 +625,7 @@ def getPE(pos, m, G, epsilon):
 def getAcc_g_smth(pos, mass, G, epsilon):
 
 	N = pos.shape[0]
-	field = np.zeros_like(pos)
+	field = np.zeros((N, 3))
 
 	for i in range(N):
 
@@ -666,7 +666,7 @@ def getAcc_g_smth(pos, mass, G, epsilon):
 
 #===== getAcc_g_smth_mpi
 @njit
-def getAcc_g_smth_mpi(nbeg, nend, pos, mass, G, epsilon):
+def getAcc_g_smth_mpi(nbeg, nend, pos, mass, G, epsilon): ## NOTE that all particles should have the same mass !!!!!!!!!!!!!!!!!!!!!!!!!
 
 	N = pos.shape[0]
 	M = nend - nbeg
@@ -707,12 +707,12 @@ def getAcc_g_smth_mpi(nbeg, nend, pos, mass, G, epsilon):
 
 
 
-#===== getAcc_g_smth_mpi
+#===== getAcc_g_smth
 @njit
 def getAcc_g_smthx(pos, mass, G, epsilon):
 
 	N = pos.shape[0]
-	field = np.zeros_like(pos)
+	field = np.zeros((N, 3))
 
 	for i in range(N):
 
@@ -810,7 +810,7 @@ def h_smooth_fast(pos, h):
 	Nth_up = 50 + 5
 	Nth_low = 50 - 5
 
-	hres = np.zeros_like(h)
+	hres = np.zeros(N)
 	
 	n_Max_iteration = 100
 
@@ -901,5 +901,49 @@ def h_smooth_fast_mpi(nbeg, nend, pos, h):
 
 	return hres
 
+
+
+
+
+#===== getAcc_g_smth_mimj_mpi # Here, the mass of the particles do not necesserily need to be the same i.e. m[i] can be different from m[j] !
+@njit
+def getAcc_g_smth_mimj_mpi(nbeg, nend, pos, mass, G, epsilon):
+
+	N = pos.shape[0]
+	field = np.zeros((N, 3))
+
+	for i in range(nbeg, nend):
+
+		for j in range(i+1, N):
+
+			dx = pos[j, 0] - pos[i, 0]
+			dy = pos[j, 1] - pos[i, 1]
+			dz = pos[j, 2] - pos[i, 2]
+			
+			rr = (dx*dx + dy*dy + dz*dz)**0.5
+
+			inv_r3 = 1.0 / rr**3
+
+			epsilonij = 0.5 * (epsilon[i] + epsilon[j])
+			q = rr / epsilonij
+			
+			if q <= 1.0:
+				fk = (1.0/epsilonij**3) * ( (4.0/3.0) - (6.0/5.0)*q**2 + (1.0/2.0)*q**3 )
+
+			if (q > 1.) and (q <= 2.):
+				fk = inv_r3 * ( (-1.0/15.0) + (8.0/3.0)*q**3 - 3.0*q**4 + (6.0/5.0)*q**5 - (1.0/6.0)*q**6 )
+
+			if q > 2.:
+				fk = inv_r3
+
+			field[i, 0] += G * fk * dx * mass[j]
+			field[j, 0] -= G * fk * dx * mass[i]
+			
+			field[i, 1] += G * fk * dy * mass[j]
+			field[j, 1] -= G * fk * dy * mass[i]
+			
+			field[i, 2] += G * fk * dz * mass[j]
+			field[j, 2] -= G * fk * dz * mass[i]
+	return field
 
 
