@@ -16,12 +16,17 @@ kB = 1.3807e-16  # cm2 g s-2 K-1
 M_sun = 1.989e33 # gram
 UnitRadius_in_cm = 3.086e18 # == 1 pc
 UnitTime_in_s = 3.16e13 # == 1Myr
+UnitTime_in_kyears = UnitTime_in_s / 3600. / 24. / 365.25 / 1000. # in thounsand years unit.
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
 
 UnitMass_in_g = UnitRadius_in_cm**3 / grav_const_in_cgs / UnitTime_in_s**2
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 #-------------------------------------------
+
+print('UnitDensity_in_cgs = ', UnitDensity_in_cgs)
+
+
 
 mH = 1.6726e-24 # gram
 
@@ -31,11 +36,9 @@ dirx = './Outputs/'
 
 filz = np.sort(glob.glob(dirx+'*.pkl'))
 
-plt.figure(figsize = (8, 8))
-
 t = 0.0
 
-j = 800 
+j = 0
 
 with open(filz[j], 'rb') as f:
 	res = pickle.load(f)
@@ -44,7 +47,12 @@ r = res['pos']
 u = res['u']
 rho = res['rho']
 nH = rho * UnitDensity_in_cgs / mH
-dt = res['dt']
+t = res['current_t']
+
+plt.hist(rho, bins = 20)
+plt.show()
+
+s()
 
 x_ = r[:, 0]
 y_ = r[:, 1]
@@ -61,7 +69,6 @@ z = z_#[nz]
 #print('rho = ', np.sort(rho))
 #print()
 
-t += dt
 
 X = 0.75
 Y = 0.25
@@ -92,35 +99,38 @@ def T_from_u(rho, u, unit_rho, unit_U):
 	return Tres
 
 
-TT = time.time()
+TA = time.time()
 T = T_from_u(rho, u, UnitDensity_in_cgs, Unit_u_in_cgs)
-print('TT = ', time.time() - TT)
+print('TA = ', time.time() - TA)
 
-print(np.sort(T))
+print('Temp = ', np.sort(T))
 
-#plt.hist(T, bins = 20)
-#plt.show()
+plt.hist(T, bins = 20)
+plt.show()
 
 
-nn = np.where(nH > 3500.)[0]
+nn = np.where(nH > 3000.)[0]
 
-nn = np.where(T > 12.)[0]
+nn = np.where(T > 80.)[0]
 
 xH = x[nn]
 yH = y[nn]
 zH = z[nn]
 
 
+plt.figure(figsize = (8, 8))
+
 plt.scatter(x, y, s = 0.1, color = 'black')
-plt.scatter(xH, yH, s = 0.50, color = 'lime')
+plt.scatter(xH, yH, s = 0.50, color = 'red')
+
+plt.title('t = ' + str(np.round(t*UnitTime_in_kyears,2)))
 
 plt.xlim(-24, 24)
 plt.ylim(-24, 24)
 
-#plt.xlim(-2, 2)
-#plt.ylim(-2, 2)
+#plt.xlim(-4, 4)
+#plt.ylim(-4, 4)
 
-plt.title('t = ' + str(t))
 
 plt.show()
 

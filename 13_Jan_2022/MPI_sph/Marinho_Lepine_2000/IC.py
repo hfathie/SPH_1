@@ -5,7 +5,7 @@ import pickle
 np.random.seed(42)
 
 
-nPart = 12000
+nPart = 5000
 
 Rc = 10. # in code unit
 # Note that the following calculation for r in "r = Rc * ksi1**0.5" line is for the asumption that M = 10 in code unit. See Marinho et al (2000; Appendix D.).
@@ -36,7 +36,7 @@ res = np.vstack((res1, res2))
 
 vel1 = np.zeros_like(res1)
 vel2 = np.zeros_like(res2)
-vel1[:, 0] = -5.0 # km/s
+vel1[:, 0] = -5.0 # km/s !!!!!!!!!!!!!!!!!! WHY THIS IS in km/s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 vel2[:, 0] = 5.0
 
 vel = np.vstack((vel1, vel2))
@@ -44,7 +44,7 @@ vel = np.vstack((vel1, vel2))
 
 dictx = {'r': res, 'v': vel}
 
-with open('Marinho_IC_12000.pkl', 'wb') as f:
+with open('Marinho_IC_' + str(int(nPart)) + '.pkl', 'wb') as f:
 	pickle.dump(dictx, f)
 
 

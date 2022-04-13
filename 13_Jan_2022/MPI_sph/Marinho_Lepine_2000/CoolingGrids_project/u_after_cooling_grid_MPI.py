@@ -7,7 +7,7 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 nCPUs = comm.Get_size()
 
-#--- Scaling From Marinho et al. (2000)-----
+#--- Scaling From Marinho et al. (2000) -----
 M_sun = 1.989e33 # gram
 UnitRadius_in_cm = 3.086e18 # == 1 pc
 UnitTime_in_s = 3.16e13 # == 1Myr
@@ -16,7 +16,7 @@ grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
 UnitMass_in_g = UnitRadius_in_cm**3 / grav_const_in_cgs / UnitTime_in_s**2
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
-#-------------------------------------------
+#--------------------------------------------
 
 u_vect = np.logspace(np.log10(0.1), np.log10(1340.) ,  10) # in code unit
 rho_vect = np.logspace(np.log10(1e-7), np.log10(112.), 10) # in code unit

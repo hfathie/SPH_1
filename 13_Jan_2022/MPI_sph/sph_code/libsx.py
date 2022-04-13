@@ -855,8 +855,8 @@ def h_smooth_fast_mpi(nbeg, nend, pos, h):
 
 	N = pos.shape[0]
 
-	Nth_up = 50 + 10
-	Nth_low = 50 - 10
+	Nth_up = 50 + 5
+	Nth_low = 50 - 5
 	
 	n_Max_iteration = 100
 	

@@ -39,11 +39,19 @@ for j in range(0, len(filz), 20):
 	xyrange = 1.2
 	ax.axis(xmin = -xyrange, xmax = xyrange)
 	ax.axis(ymin = -xyrange, ymax = xyrange)
+	
+	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
+	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')
+	
+	#ax.axvline(x = -0.5, linestyle = '--', color = 'blue')
+	#ax.axvline(x =  0.5, linestyle = '--', color = 'blue')
+	
 	ax.set_title('t = ' + str(np.round(t*unitTime_in_yr,2)))
 	fig.canvas.flush_events()
 	time.sleep(0.01)
 	
-	#kb =readchar.readkey()
+	#if np.round(t*unitTime_in_yr,2) > 20000:
+	#	kb =readchar.readkey()
 	
 	if kb == 'q':
 		break

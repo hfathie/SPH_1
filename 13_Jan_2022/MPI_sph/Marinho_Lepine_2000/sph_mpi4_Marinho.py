@@ -24,6 +24,7 @@ dt = data[:, 3].reshape(NN, NN)
 u_uniq = np.unique(uBefore)
 rho_uniq = np.unique(rhoG)
 
+
 @njit
 def do_grid_cooling(ut, rhot):
 
@@ -94,7 +95,7 @@ G = 1.0
 #---------------------------
 t = 0.0
 dt = 0.005
-tEnd = 6.0
+tEnd = 5.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
 filz = np.sort(os.listdir('./Outputs'))
@@ -105,7 +106,7 @@ except:
 	pass
 
 
-with open('Marinho_IC_12000.pkl', 'rb') as f:
+with open('Marinho_IC_5000.pkl', 'rb') as f:
     res = pickle.load(f)
 
 r = res['r']
@@ -132,7 +133,7 @@ epsilon = np.zeros(N) + 0.02
 MSPH = 10.0 # total gas mass
 
 
-uFloor = 0.211 # 0.211 corresponds to T = 20 K. I used u_as_a_func_of_T function to calculate it !
+uFloor = 0.422 # 0.422 corresponds to T = 20 K. I used u_as_a_func_of_T function to calculate it !
 u = np.zeros(N) + uFloor
 
 if rank == 0:
@@ -338,6 +339,17 @@ while t < tEnd:
 	
 	rho = comm.bcast(rho, root = 0)	
 	#----------------------
+	
+	
+	
+	#------ Setting epsilon = h -------
+	if rank == 0:
+		epsilon = h.copy()
+	
+	epsilon = comm.bcast(epsilon, root = 0)
+	#----------------------------------
+	
+	
 	
 	#------- acc_g --------
 	local_acc_g = getAcc_g_smth_mpi(nbeg, nend, r, m, G, epsilon)

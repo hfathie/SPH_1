@@ -1,5 +1,5 @@
 
-# The difference with _v3 is that here the particles can have different mass and the gravitational acceleration calculation is modified.
+# The difference with _v3 is that here the particles can have different mass and the gravitational acceleration calculation is accordingly modified.
 # The difference with _v2 is that here we incorporate shear viscosity by using the Balsara switch.
 # The difference with previous version is that here we separated u and u_previous, ut_previous updates separately. See below.
 # modified to be used with any number of CPUs.
