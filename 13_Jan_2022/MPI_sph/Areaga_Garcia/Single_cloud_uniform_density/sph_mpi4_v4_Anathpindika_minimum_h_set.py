@@ -14,49 +14,17 @@ from mpi4py import MPI
 from shear import *
 
 
-#----- P_polytrop
-@njit
-def P_polytrop(rho, T_cld, T_ps):
-
-	N = len(rho)
-	P_res = np.zeros(N)
-	mH = 1.6726e-24 # gram
-	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.0 * mH
-	const = kB/mH2
-	
-	for i in range(N):
-		
-		rhot = rho[i]*UnitDensity_in_cgs
-		
-		if rhot <= 1.e-21:
-			P_res[i] = rhot * const * T_cld
-		
-		elif (rhot >= 1.e-21) and (rhot <= 5.e-21):
-			P_res[i] = rhot * const * gamma * T_cld * (rhot/5e-21)**(gamma-1.)
-		
-		elif (rhot >= 5.e-21) and (rhot <= 1.e-18):
-			P_res[i] = rhot * const * T_ps
-		
-		elif rhot > 1.e-18:
-			P_res[i] = rhot * const * T_cld * (1. + gamma * (rhot/1e-14)**(gamma-1.))
-	
-	P_res = P_res / Unit_P_in_cgs
-
-	return P_res
-
-
 
 
 #----- P_polytrop_mpi
 @njit
-def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps):
+def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
 
 	M = nend - nbeg
 	P_res = np.zeros(M)
 	mH = 1.6726e-24 # gram
 	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.0 * mH
+	mH2 = 2.7 * mH
 	const = kB/mH2
 	
 	for i in range(nbeg, nend):
@@ -66,14 +34,14 @@ def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps):
 		if rhot <= 1.e-21:
 			P_res[i-nbeg] = rhot * const * T_cld
 		
-		elif (rhot >= 1.e-21) and (rhot <= 5.e-21):
-			P_res[i-nbeg] = rhot * const * gamma * T_cld * (rhot/5e-21)**(gamma-1.)
+		elif (rhot > 1.e-21) and (rhot <= 5.e-21):
+			P_res[i-nbeg] = rhot * const * gamma * T_cld * (rhot/5.e-21)**(gamma-1.)
 		
-		elif (rhot >= 5.e-21) and (rhot <= 1.e-18):
+		elif (rhot > 5.e-21) and (rhot <= 1.e-18):
 			P_res[i-nbeg] = rhot * const * T_ps
 		
 		elif rhot > 1.e-18:
-			P_res[i-nbeg] = rhot * const * T_cld * (1. + gamma * (rhot/1e-14)**(gamma-1.))
+			P_res[i-nbeg] = rhot * const * T_0 * (1. + gamma * (rhot/1e-14)**(gamma-1.))
 	
 	P_res = P_res / Unit_P_in_cgs
 
@@ -81,39 +49,15 @@ def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps):
 
 
 
-#----- sound_speed
-@njit
-def sound_speed(rho, T_cld, T_ps):
-
-	N = len(rho)
-	c = np.zeros(N)
-	mH = 1.6726e-24 # gram
-	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.0 * mH
-	const = kB/mH2
-	
-	for i in range(N):
-		
-		rhot = rho[i]*UnitDensity_in_cgs
-		
-		c[i] = (const * T_cld)**0.5
-		
-		if (rhot >= 5.e-21) and (rhot <= 1.e-18):
-			c[i] = (const * T_ps)**0.5
-		
-	return c / unitVelocity
-
-
-
 #----- sound_speed_mpi
 @njit
-def sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps):
+def sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
 
 	M = nend - nbeg
 	c = np.zeros(M)
 	mH = 1.6726e-24 # gram
 	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.0 * mH
+	mH2 = 2.7 * mH
 	const = kB/mH2
 	
 	for i in range(nbeg, nend):
@@ -122,8 +66,11 @@ def sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps):
 		
 		c[i-nbeg] = (const * T_cld)**0.5
 		
-		if (rhot >= 5.e-21) and (rhot <= 1.e-18):
+		if (rhot > 5.e-21) and (rhot <= 1.e-18):
 			c[i-nbeg] = (const * T_ps)**0.5
+		
+		elif rhot > 1.e-18:
+			c[i-nbeg] = (const * T_0)**0.5
 		
 	return c / unitVelocity
 
@@ -138,8 +85,11 @@ nCPUs = comm.Get_size()
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 400.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-UnitRadius_in_cm = 2.0 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+#rB = 0.8 # pc
+#ksi = 3.
+R_0 = 0.84 #rB/ksi
+UnitRadius_in_cm = R_0 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
@@ -147,12 +97,14 @@ unitVelocity = (grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm)**0.5
 
 unitTime = (UnitRadius_in_cm**3/grav_const_in_cgs/UnitMass_in_g)**0.5
 unitTime_in_yr = unitTime / 3600. / 24. / 365.25
-unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
+unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
 
 print('unitTime_in_Myr = ', unitTime_in_Myr)
+print('unitVelocity = ', unitVelocity)
 
-T_cld = 170.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_ps  = 11000. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+T_cld = 54.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+T_ps  = T_cld#184. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.
+T_0 = 10. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 
 #---- Constants -----------
 eta = 0.1
@@ -162,9 +114,11 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.0001
-tEnd = 3.0
+dt = 0.002
+tEnd = 8.0
 Nt = int(np.ceil(tEnd/dt)+1)
+
+minimum_h = 0.01 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 filz = np.sort(os.listdir('./Outputs'))
@@ -176,11 +130,28 @@ except:
 
 
 
-with open('Marinho_IC_20000.pkl', 'rb') as f:
+with open('Data_Uniform_Initial_rho.pkl', 'rb') as f:
 	data = pickle.load(f)
 
 r = data['r']
 v = data['v'] / unitVelocity
+h = data['h']
+m = data['m']
+
+print(h.shape)
+
+print(np.sort(h))
+
+print(r.shape)
+
+
+#if rank == 0:
+#	print(np.sort(v.flatten()))
+
+#	import matplotlib.pyplot as plt
+#	plt.scatter(r[:, 0], r[:, 1], s = 1, color = 'k')
+#	plt.show()
+
 
 print('The file is read .....')
 print()
@@ -200,38 +171,37 @@ else:
 	nend = nbeg + count
 #----------------------------
 
-epsilon = np.zeros(N) + 0.10
-
-MSPH = 1.0 # total gas mass
+#MSPH = 1.0 # total gas mass
 
 #v = np.zeros_like(r)
 
-uFloor = 0.05 #0.00245 # This is also the initial u.   NOTE to change this in 'do_sth' function too !!!!!!!!!!!!!!!!!!!!!
-u = np.zeros(N) + uFloor # 0.0002405 is equivalent to T = 1e3 K
+#uFloor = 0.05 #0.00245 # This is also the initial u.   NOTE to change this in 'do_sth' function too !!!!!!!!!!!!!!!!!!!!!
+#u = np.zeros(N) + uFloor # 0.0002405 is equivalent to T = 1e3 K
 
-if rank == 0:
-	Th1 = time.time()
+#if rank == 0:
+#	Th1 = time.time()
 #-------- h (initial) -------
-local_h = smoothing_length_mpi(nbeg, nend, r)  # This plays the role of the initial h so that the code can start !
-h = 0 # This is just a placeholder. Its absence would crash this line :h = comm.bcast(h, root = 0) for CPUs other than rank = 0.
+#local_h = smoothing_length_mpi(nbeg, nend, r)  # This plays the role of the initial h so that the code can start !
+#h = 0 # This is just a placeholder. Its absence would crash this line :h = comm.bcast(h, root = 0) for CPUs other than rank = 0.
 
-if rank == 0:
-	h = local_h
-	for i in range(1, nCPUs):
-		h_tmp = comm.recv(source = i)
-		h = np.concatenate((h, h_tmp))
-else:
-	comm.send(local_h, dest = 0)
-
-h = comm.bcast(h, root = 0)
+#if rank == 0:
+#	h = local_h
+#	for i in range(1, nCPUs):
+#		h_tmp = comm.recv(source = i)
+#		h = np.concatenate((h, h_tmp))
+#else:
+#	comm.send(local_h, dest = 0)
+#
+#h = comm.bcast(h, root = 0)
 #----------------------------
-if rank == 0:
-	print('Th1 = ', time.time() - Th1)
+#if rank == 0:
+#	print('Th1 = ', time.time() - Th1)
 
 
 Th2 = time.time()
 #--------- h (main) ---------
-local_h = h_smooth_fast_mpi(nbeg, nend, r, h)
+#local_h = h_smooth_fast_mpi(nbeg, nend, r, h)
+local_h = h_smooth_fast_mpi_min_h_set(nbeg, nend, r, h, minimum_h)
 
 if rank == 0:
 	h = local_h
@@ -247,7 +217,9 @@ if rank == 0:
 	print('Th2 = ', time.time() - Th2)
 #----------------------------
 
-m = np.zeros(N) + MSPH/N
+epsilon = h.copy()
+
+#m = np.zeros(N) + MSPH/N
 
 #-------- rho ---------
 if rank == 0:
@@ -294,7 +266,7 @@ if rank == 0:
 
 #--------- p ----------
 P = 0.
-local_P = P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps)
+local_P = P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
 
 if rank == 0:
 	P = local_P
@@ -309,7 +281,7 @@ P = comm.bcast(P, root = 0)
 
 #--------- c ----------
 c = 0.
-local_c = sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps)
+local_c = sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
 
 if rank == 0:
 	c = local_c
@@ -343,7 +315,7 @@ curlV = comm.bcast(curlV, root = 0)
 
 #------ acc_sph -------
 acc_sph = 0.0
-local_acc_sph = getAcc_sph_shear_mpi(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha)
+local_acc_sph = getAcc_sph_shear_mpi(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha, beta, eta)
 
 if rank == 0:
 	acc_sph = local_acc_sph
@@ -417,9 +389,10 @@ while t < tEnd:
 	
 	r = comm.bcast(r, root = 0)
 	#----------------------
-
+	
 	#--------- h ----------
-	local_h = h_smooth_fast_mpi(nbeg, nend, r, h)
+	#local_h = h_smooth_fast_mpi(nbeg, nend, r, h)
+	local_h = h_smooth_fast_mpi_min_h_set(nbeg, nend, r, h, minimum_h)
 	
 	if rank == 0:
 		h = local_h
@@ -431,6 +404,14 @@ while t < tEnd:
 
 	h = comm.bcast(h, root = 0)
 	#----------------------
+	
+	#---- Setting Minimum h ---
+	#if rank == 0:
+	#	nnx = np.where(h < minimum_h)[0]
+	#	h[nnx] = minimum_h
+	
+	#h = comm.bcast(h, root = 0)
+	#--------------------------
 	
 	#-------- rho ---------
 	local_rho = getDensity_mpi(nbeg, nend, r, m, h)
@@ -464,7 +445,7 @@ while t < tEnd:
 	#----------------------
 	
 	#--------- p ----------
-	local_P = P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps)
+	local_P = P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
 
 	if rank == 0:
 		P = local_P
@@ -478,7 +459,7 @@ while t < tEnd:
 	#----------------------
 
 	#--------- c ----------
-	local_c = sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps)
+	local_c = sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
 
 	if rank == 0:
 		c = local_c
@@ -508,7 +489,7 @@ while t < tEnd:
 	#----------------------
 	
 	#------ acc_sph -------
-	local_acc_sph = getAcc_sph_shear_mpi(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha)
+	local_acc_sph = getAcc_sph_shear_mpi(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha, beta, eta)
 	
 	if rank == 0:
 		acc_sph = local_acc_sph
@@ -575,7 +556,7 @@ while t < tEnd:
 
 	if rank == 0:
 		ii += 1
-		dictx = {'pos': r, 'v': v, 'm': m, 'u': 0., 'dt': dt, 'current_t': t, 'rho': rho}
+		dictx = {'pos': r, 'v': v, 'm': m, 'dt': dt, 'current_t': t, 'rho': rho, 'h': h}
 		with open('./Outputs/' + str(ii).zfill(5) + '.pkl', 'wb') as f:
 			pickle.dump(dictx, f)
 	

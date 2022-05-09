@@ -17,8 +17,8 @@ np.random.seed(42)
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 400.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-UnitRadius_in_cm = 2.0 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+UnitRadius_in_cm = 0.84 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
@@ -40,8 +40,8 @@ beta = 2.0
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.0001
-tEnd = 3.0
+dt = 0.002
+tEnd = 8.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
 
@@ -53,50 +53,62 @@ except:
 	pass
 
 
-T_cld = 170.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_ps  = 11000. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+T_cld = 54.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+T_ps  = T_cld#184. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.
+T_0 = 10. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 
-with open('Marinho_IC_2000.pkl', 'rb') as f:
+minimum_h = 0.01 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+with open('Data_Uniform_Initial_rho.pkl', 'rb') as f:
 	data = pickle.load(f)
 
 r = data['r']
 v = data['v'] / unitVelocity
+h = data['h']
+m = data['m']
 
 print('The file is read .....')
 print()
 
+
+plt.scatter(r[:, 0], r[:, 1], s = 1, color = 'k')
+plt.show()
+
+
 #r = np.hstack((resx, resy, resz))
 N = r.shape[0]
 
-epsilon = np.zeros(N) + 0.10
+epsilon = h.copy() #np.zeros(N) + 0.10
 
-MSPH = 1.0 # total gas mass
+#MSPH = 1.0 # total gas mass
 
 #v = np.zeros_like(r)
 
 #uFloor = 0.05 #0.00245 # This is also the initial u.   NOTE to change this in 'do_sth' function too !!!!!!!!!!!!!!!!!!!!!
 #u = np.zeros(N) + uFloor # 0.0002405 is equivalent to T = 1e3 K
 
-Th1 = time.time()
+#Th1 = time.time()
 #-------- h (initial) -------
-h = do_smoothingX((r, r))  # This plays the role of the initial h so that the code can start !
+#h = do_smoothingX((r, r))  # This plays the role of the initial h so that the code can start !
 #----------------------------
-print('Th1 = ', time.time() - Th1)
+#print('Th1 = ', time.time() - Th1)
 
 
 print('h = ', np.sort(h))
+print(h.shape)
 
 
 Th2 = time.time()
 #--------- h (main) ---------
-h = h_smooth_fast(r, h)
+h = h_smooth_fast_h_minimum_set(r, h, minimum_h)
 #----------------------------
 print('Th2 = ', time.time() - Th2)
 
 print('h = ', np.sort(h))
 
 
-m = np.zeros(N) + MSPH/N
+
+#m = np.zeros(N) + MSPH/N
 
 #-------- rho ---------
 Trho = time.time()
@@ -112,13 +124,13 @@ print('TG = ', time.time() - TG)
 
 #----- P_polytrop
 @njit
-def P_polytrop(rho, T_cld, T_ps):
+def P_polytrop(rho, T_cld, T_ps, T_0):
 
 	N = len(rho)
 	P_res = np.zeros(N)
 	mH = 1.6726e-24 # gram
 	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.0 * mH
+	mH2 = 2.7 * mH
 	const = kB/mH2
 	
 	for i in range(N):
@@ -128,14 +140,14 @@ def P_polytrop(rho, T_cld, T_ps):
 		if rhot <= 1.e-21:
 			P_res[i] = rhot * const * T_cld
 		
-		elif (rhot >= 1.e-21) and (rhot <= 5.e-21):
+		elif (rhot > 1.e-21) and (rhot <= 5.e-21):
 			P_res[i] = rhot * const * gamma * T_cld * (rhot/5e-21)**(gamma-1.)
 		
-		elif (rhot >= 5.e-21) and (rhot <= 1.e-18):
+		elif (rhot > 5.e-21) and (rhot <= 1.e-18):
 			P_res[i] = rhot * const * T_ps
 		
 		elif rhot > 1.e-18:
-			P_res[i] = rhot * const * T_cld * (1. + gamma * (rhot/1e-14))**(gamma-1.)
+			P_res[i] = rhot * const * T_0 * (1. + gamma * (rhot/1e-14))**(gamma-1.)
 	
 	P_res = P_res / Unit_P_in_cgs
 
@@ -145,13 +157,13 @@ def P_polytrop(rho, T_cld, T_ps):
 
 #----- sound_speed
 @njit
-def sound_speed(rho, T_cld, T_ps):
+def sound_speed(rho, T_cld, T_ps, T_0):
 
 	N = len(rho)
 	c = np.zeros(N)
 	mH = 1.6726e-24 # gram
 	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.0 * mH
+	mH2 = 2.7 * mH
 	const = kB/mH2
 	
 	for i in range(N):
@@ -160,8 +172,11 @@ def sound_speed(rho, T_cld, T_ps):
 		
 		c[i] = (const * T_cld)**0.5
 		
-		if (rhot >= 5.e-21) and (rhot <= 1.e-18):
+		if (rhot > 5.e-21) and (rhot <= 1.e-18):
 			c[i] = (const * T_ps)**0.5
+		
+		elif rhot > 1.e-18:
+			c[i] = (const * T_0)**0.5
 		
 	return c / unitVelocity
 	
@@ -219,8 +234,15 @@ while t < tEnd:
 	r += v * dt
 	#----------------------
 	
+	#dictx = {'r': r, 'v': v, 'h': h}
+	#with open('debug_Data2.pkl', 'wb') as f:
+	#	pickle.dump(dictx, f)
+	
+	#plt.scatter(r[:, 0], r[:, 1], s = 1, color = 'k')
+	#plt.show()
+	
 	#--------- h ----------
-	h = h_smooth_fast(r, h)
+	h = h_smooth_fast_h_minimum_set(r, h, minimum_h)
 	#----------------------
 		
 	#-------- rho ---------
@@ -271,6 +293,7 @@ while t < tEnd:
 	
 	t += dt
 	
+	#if True:
 	if not (ii%50):
 		print('h/c = ', np.sort(h/c))
 

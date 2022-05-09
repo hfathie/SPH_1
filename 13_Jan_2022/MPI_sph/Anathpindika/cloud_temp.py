@@ -49,16 +49,39 @@ M_sun = 1.989e33 # gram
 G = 6.67259e-8 #  cm3 g-1 s-2
 
 ksi_B = 3.
-R_cld = 2.0 * 3.086e18 # cm
+R_cld = 0.8 * 3.086e18 # cm
 mH2 = 2.7 * mH
 
-M_sphere = 400.0 * M_sun # in gram
+M_sphere = 50.0 * M_sun # in gram
 
 rB = R_cld # Note that rB is the physical radius of the cloud. R_0 is not the physical radius of the cloud See Anathpindika 2009 paper !!!!!!
 
 T_cloud = G * M_sphere * ksi_B * mH2 / (rB * mu_from_ksi(x, y2_sol, ksi_B) * kB)
 
 print('Cloud Temperature = ', T_cloud)
+
+
+
+#------ Cloud central density ---------
+grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
+M_cld = 50. * M_sun
+
+T_cld = 54.
+
+c_s = (kB*T_cld/mH2)**0.5
+
+muu = mu_from_ksi(x, y2_sol, ksi_B)
+
+rho_c = c_s**6/4./np.pi/grav_const_in_cgs**3/M_cld**2 * muu**2
+
+print('rho_c = ', rho_c)
+
+
+#------- Cloud Bonnor-Ebert Mass ----------
+
+# Delete this. it is wrong. there should be rho_c in the denominator !!!!M_BE = c_s**3 / (4.*np.pi*grav_const_in_cgs**3)**0.5 * muu**2 
+
+#print('M_BE (in M_sun) = ', M_BE/M_sun)
 
 
 

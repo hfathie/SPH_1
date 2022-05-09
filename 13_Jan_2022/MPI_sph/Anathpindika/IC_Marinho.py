@@ -52,8 +52,8 @@ vel2 = np.zeros_like(res2)
 c_s = 83765.09 # cm/s  #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 Mach = 25.             #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 
-vel1[:, 0] = -Mach * c_s / unitVelocity
-vel2[:, 0] =  Mach * c_s / unitVelocity
+vel1[:, 0] = -Mach * c_s #/ unitVelocity # We do this in the main code.
+vel2[:, 0] =  Mach * c_s #/ unitVelocity
 
 vel = np.vstack((vel1, vel2))
 
