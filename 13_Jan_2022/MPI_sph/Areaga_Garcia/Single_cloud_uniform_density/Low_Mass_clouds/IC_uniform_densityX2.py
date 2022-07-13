@@ -1,5 +1,5 @@
 
-# Solution of the isothermal Lane-Emden equation.
+# Try to create a sphere with REALLY a uniform density with rho_0 = 'predifined'
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,7 +16,7 @@ TA = time.time()
 res = []
 count = 0
 
-N = 12000
+N = 10000
 
 while count < N:
 
@@ -36,15 +36,18 @@ x = res[:, 0]
 y = res[:, 1]
 z = res[:, 2]
 
+plt.scatter(res[:, 0], res[:, 1], s = 0.05, color = 'k')
+plt.show()
+
 N = res.shape[0]
 
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+UnitMass_in_g = 2.21 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
 #rB = 0.8 # pc
 #ksi = 3.
-R_0 = 0.84 #rB/ksi
+R_0 = 0.97 #rB/ksi
 UnitRadius_in_cm = R_0 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
@@ -58,10 +61,12 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 print('unitVelocity = ', unitVelocity)
 print('UnitMass_in_g = ', UnitMass_in_g)
+print('UnitDensity_in_cgs = ', UnitDensity_in_cgs)
 
 G = grav_const_in_cgs
 
-Mcld = 50. * M_sun
+Mcld = UnitMass_in_g
+Rcld = R_0
 
 #---- Speed of Sound ------
 mH = 1.6726e-24 # gram
@@ -83,11 +88,64 @@ print()
 
 #------- Prepare the IC to output -------
 
+#m = 3. * Mcld / 4./np.pi/Rcld**3/N + np.zeros(N)
+m = np.ones(N) / N
+print('m = ', np.sort(m))
+
+rho_0 = 1.3024e-21 #g/cm^3
+rho_0 = rho_0 / UnitDensity_in_cgs
+
+r_arr = (x*x + y*y + z*z)**0.5
+
+res = []
+
+
+for i in range(len(x)):
+	for j in range(len(y)):
+		for k in range(len(z)):
+
+			rtmp = (x[i]*x[i] +y[j]*y[j] + z[k]*z[k])**0.5
+			nnt = np.where(r_arr <= rtmp)[0]
+			
+			# calculating the corresponding theta & phi
+			theta = np.arccos(z[k]/rtmp) # the angle from z-axis
+			phi = np.arctan(y[j]/x[i])
+			
+			if (x[i] < 0.) & (y[j] > 0.):
+				phi += np.pi
+			
+			elif (x[i] < 0.) & (y[j] < 0.):
+				phi += np.pi
+			
+			elif (x[i] > 0.) & (y[j] < 0.):
+				phi += 2.*np.pi
+			
+			M_r_dist = np.sum(m[nnt]) # the mass within a sphere of radius <= rtmp.
+			
+			r_dist = (3./4./np.pi/rho_0 * M_r_dist)
+			
+			# Reconstructing the updated coordinate:
+			x_dist = r_dist * np.cos(phi) * np.sin(theta)
+			y_dist = r_dist * np.sin(phi) * np.sin(theta)
+			z_dist = r_dist * np.cos(theta)
+
+			res.append([x_dist, y_dist, z_dist])
+
+
+plt.scatter(res[:, 0], res[:, 1], s = 0.05, color = 'k')
+plt.show()
+
+s()
+
+
+
+
 m = np.ones(N) / N
 h = do_smoothingX((res, res)) # We don't save this one as this is the h for only one of the clouds.
 rho = getDensity(res, m, h)
 
 print('rho = ', np.sort(rho)*UnitDensity_in_cgs)
+#print('mean(rho) = ', np.mean(rho)*UnitDensity_in_cgs)
 
 hB = np.median(h) # the two clouds will be separated by 2*hB
 

@@ -27,8 +27,6 @@ with open('Nxy.pkl', 'rb') as f:
 rho = data['rho']
 dx = data['dx']
 mH = 1.6726e-24 # gram
-muu = 2.7
-mH2 = muu * mH
 
 colden = rho * UnitDensity_in_cgs * dx * UnitRadius_in_cm # column density in g/cm2
 colden2= colden / mH # column density in cm^-2
@@ -47,7 +45,7 @@ print('max(colden in M_sun/pc^2) = ', np.max(colden_Msun_pc2.flatten()))
 plt.figure(figsize = (12, 8))
 plt.imshow(colden_Msun_pc2.T, cmap = 'rainbow_r')
 
-plt.clim(0, 1.70)
+plt.clim(0, 2.0)
 
 plt.colorbar()
 

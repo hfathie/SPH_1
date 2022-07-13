@@ -47,7 +47,7 @@ for j in range(0, len(filz), 10):
 	ax.scatter(x, y, s = 0.01, color = 'black')
 	xyrange = 1.2
 	ax.axis(xmin = -1.2, xmax = 3.2)
-	ax.axis(ymin = -1.2, ymax = 1.2)
+	ax.axis(ymin = -1.2, ymax = 2.5)
 	
 	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
 	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')

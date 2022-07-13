@@ -16,7 +16,7 @@ TA = time.time()
 res = []
 count = 0
 
-N = 12000
+N = 10000
 
 while count < N:
 
@@ -41,11 +41,9 @@ N = res.shape[0]
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-#rB = 0.8 # pc
-#ksi = 3.
-R_0 = 0.84 #rB/ksi
-UnitRadius_in_cm = R_0 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitMass_in_g = 225. * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+R_0 = 1.94 # pc
+UnitRadius_in_cm = R_0 * 3.086e18    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
@@ -58,10 +56,13 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 print('unitVelocity = ', unitVelocity)
 print('UnitMass_in_g = ', UnitMass_in_g)
+print('UnitDensity_in_cgs = ', UnitDensity_in_cgs)
+
+s()
 
 G = grav_const_in_cgs
 
-Mcld = 50. * M_sun
+#Mcld = 50. * M_sun
 
 #---- Speed of Sound ------
 mH = 1.6726e-24 # gram
@@ -88,6 +89,7 @@ h = do_smoothingX((res, res)) # We don't save this one as this is the h for only
 rho = getDensity(res, m, h)
 
 print('rho = ', np.sort(rho)*UnitDensity_in_cgs)
+#print('mean(rho) = ', np.mean(rho)*UnitDensity_in_cgs)
 
 hB = np.median(h) # the two clouds will be separated by 2*hB
 

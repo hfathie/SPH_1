@@ -7,7 +7,7 @@ import readchar
 import time
 
 
-unitTime_in_Myr =  1.5089515035250234 # Myr
+unitTime_in_Myr =  0.6251515693750652 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
@@ -16,11 +16,11 @@ filz = np.sort(glob.glob('./Outputs/*.pkl'))
 #j = -1
 
 plt.ion()
-fig, ax = plt.subplots(figsize = (12, 6))
+fig, ax = plt.subplots(figsize = (8, 6))
 
 kb = ''
 
-for j in range(0, len(filz), 10):
+for j in range(0, len(filz), 20):
 
 	print('j = ', j)
 
@@ -46,8 +46,11 @@ for j in range(0, len(filz), 10):
 
 	ax.scatter(x, y, s = 0.01, color = 'black')
 	xyrange = 1.2
-	ax.axis(xmin = -1.2, xmax = 3.2)
-	ax.axis(ymin = -1.2, ymax = 1.2)
+	#ax.axis(xmin = -1.2, xmax = 3.2)
+	#ax.axis(ymin = -1.2, ymax = 1.5)
+	
+	ax.axis(xmin = +0.95, xmax = 1.2)
+	ax.axis(ymin = +0.00, ymax = 0.3)
 	
 	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
 	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')

@@ -7,13 +7,10 @@ import readchar
 import time
 
 
-unitTime_in_Myr =  1.5089515035250234 # Myr
+unitTime_in_Myr =  1.0669898406241805 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
-#filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
-
-#j = -1
 
 plt.ion()
 fig, ax = plt.subplots(figsize = (12, 6))
