@@ -213,7 +213,7 @@ res2[:, 0] += (2.*1.0 + 2.*hB) # 1.0 is the radius of the cloud !
 
 
 #--- Applying the impact parameter on one of the clouds ---
-b_param = 0.0 # pc
+b_param = 0.2 # pc
 res2[:, 1] = b_param + res2[:, 1] # see Turner et al - 1995
 #----------------------------------------------------------
 
