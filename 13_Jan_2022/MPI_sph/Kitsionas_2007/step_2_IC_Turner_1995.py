@@ -219,7 +219,7 @@ res2[:, 1] = b_param + res2[:, 1] # see Turner et al - 1995
 
 res12 = np.vstack((res, res2))
 
-Mach = 5./2. # Note that if both cloud have Mach=10 then the relative speed will be Mach = 20 !! You see this !!! So it should be divided by 2.
+Mach = 10./2. # Note that if both cloud have Mach=10 then the relative speed will be Mach = 20 !! You see this !!! So it should be divided by 2.
 vel_ref = Mach * c_0 # The speed of each cloud. Note that the clouds are in a collision course so v1 = -v2.
 
 v_cld_1 = np.zeros_like(res)

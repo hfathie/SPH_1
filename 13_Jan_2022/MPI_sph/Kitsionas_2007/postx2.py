@@ -50,11 +50,11 @@ for j in range(0, len(filz), 20):
 	#ax.axis(xmin = -1.2, xmax = 3.2)
 	#ax.axis(ymin = -1.2, ymax = 1.5)
 	
-	ax.axis(xmin = 1.08, xmax = 1.10)
-	ax.axis(ymin = -0.01, ymax = 0.01)
+	#ax.axis(xmin = 1.08, xmax = 1.10)
+	#ax.axis(ymin = -0.01, ymax = 0.01)
 	
-	#ax.axis(xmin = +1.00, xmax = 1.20)
-	#ax.axis(ymin = +0.05, ymax = 0.28)
+	ax.axis(xmin = +1.00, xmax = 1.20)
+	ax.axis(ymin = +0.05, ymax = 0.28)
 	
 	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
 	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')
