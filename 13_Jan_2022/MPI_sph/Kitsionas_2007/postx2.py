@@ -16,7 +16,7 @@ filz = np.sort(glob.glob('./Outputs/*.pkl'))
 #j = -1
 
 plt.ion()
-fig, ax = plt.subplots(figsize = (8, 6))
+fig, ax = plt.subplots(figsize = (10, 6))
 
 kb = ''
 
@@ -46,11 +46,15 @@ for j in range(0, len(filz), 20):
 
 	ax.scatter(x, y, s = 0.01, color = 'black')
 	xyrange = 1.2
+	
 	#ax.axis(xmin = -1.2, xmax = 3.2)
 	#ax.axis(ymin = -1.2, ymax = 1.5)
 	
-	ax.axis(xmin = +0.95, xmax = 1.2)
-	ax.axis(ymin = +0.00, ymax = 0.3)
+	ax.axis(xmin = 1.08, xmax = 1.10)
+	ax.axis(ymin = -0.01, ymax = 0.01)
+	
+	#ax.axis(xmin = +1.00, xmax = 1.20)
+	#ax.axis(ymin = +0.05, ymax = 0.28)
 	
 	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
 	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')
