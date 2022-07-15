@@ -58,8 +58,6 @@ print('unitVelocity = ', unitVelocity)
 print('UnitMass_in_g = ', UnitMass_in_g)
 print('UnitDensity_in_cgs = ', UnitDensity_in_cgs)
 
-s()
-
 G = grav_const_in_cgs
 
 #Mcld = 50. * M_sun

@@ -34,10 +34,10 @@ def do_smoothingX_single(r, pos):
 	dist = np.zeros(N)
 	for j in range(N):
 
-	    dx = pos[j, 0] - r[0]
-	    dy = pos[j, 1] - r[1]
-	    dz = pos[j, 2] - r[2]
-	    dist[j] = (dx**2 + dy**2 + dz**2)**0.5
+		dx = pos[j, 0] - r[0]
+		dy = pos[j, 1] - r[1]
+		dz = pos[j, 2] - r[2]
+		dist[j] = (dx**2 + dy**2 + dz**2)**0.5
 
 	hres = np.sort(dist)[50]
 

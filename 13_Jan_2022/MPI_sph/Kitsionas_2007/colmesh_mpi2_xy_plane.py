@@ -33,10 +33,10 @@ def do_smoothingX_single(r, pos):
 	dist = np.zeros(N)
 	for j in range(N):
 
-	    dx = pos[j, 0] - r[0]
-	    dy = pos[j, 1] - r[1]
-	    dz = pos[j, 2] - r[2]
-	    dist[j] = (dx**2 + dy**2 + dz**2)**0.5
+		dx = pos[j, 0] - r[0]
+		dy = pos[j, 1] - r[1]
+		dz = pos[j, 2] - r[2]
+		dist[j] = (dx**2 + dy**2 + dz**2)**0.5
 
 	hres = np.sort(dist)[50]
 
@@ -98,7 +98,7 @@ print('unitTime_in_Myr = ', unitTime_in_Myr)
 filez = np.sort(glob.glob('./Outputs_12k_b_0.2_Mach_10/*.pkl'))
 #filez = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
-j = 500
+j = 1200
 
 #filez = np.sort(glob.glob('./Outputs/*.pkl'))
 
@@ -130,12 +130,11 @@ N = pos.shape[0]
 MSPH = 1.0
 m = np.zeros(N) + MSPH/N
 
-xxyy = 1.0
-#x = [-xxyy, xxyy]
-x = [-1.2, 3.2]
-y = z = [-1.2, 1.5] # [-xxyy, xxyy]
+x = [1.00, 1.20]
+y = [0.00, 0.20]
+z = [-0.3, 0.3]
 
-dx = dy = dz = 0.05
+dx = dy = dz = 0.002
 
 xarr = np.arange(x[0]-dx, x[1], dx)
 yarr = zarr = np.arange(y[0]-dy, y[1], dy)
