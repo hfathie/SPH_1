@@ -95,10 +95,10 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
 
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 
-filez = np.sort(glob.glob('./Outputs_24k/*.pkl'))
+filez = np.sort(glob.glob('./Outputs_12k_b_0.2_Mach_10/*.pkl'))
 #filez = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
-j = 730
+j = 500
 
 #filez = np.sort(glob.glob('./Outputs/*.pkl'))
 
@@ -132,10 +132,10 @@ m = np.zeros(N) + MSPH/N
 
 xxyy = 1.0
 #x = [-xxyy, xxyy]
-x = [-1., 3.]
-y = z = [-xxyy, xxyy]
+x = [-1.2, 3.2]
+y = z = [-1.2, 1.5] # [-xxyy, xxyy]
 
-dx = dy = dz = 0.02
+dx = dy = dz = 0.05
 
 xarr = np.arange(x[0]-dx, x[1], dx)
 yarr = zarr = np.arange(y[0]-dy, y[1], dy)

@@ -47,7 +47,7 @@ print('max(colden in M_sun/pc^2) = ', np.max(colden_Msun_pc2.flatten()))
 plt.figure(figsize = (12, 8))
 plt.imshow(colden_Msun_pc2.T, cmap = 'rainbow_r')
 
-plt.clim(0, 2.25)
+plt.clim(0, 4.6)
 
 plt.colorbar()
 
