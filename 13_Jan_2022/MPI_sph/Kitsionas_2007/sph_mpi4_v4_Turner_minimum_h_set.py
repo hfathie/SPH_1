@@ -29,7 +29,7 @@ def P_polytrop_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s):
 			P_res[i-nbeg] = rhot * c_0*c_0
 		
 		elif rhot > rho_0:
-			P_res[i-nbeg] = rhot * ((c_0*c_0 - c_s*c_s)*(rhot/rho_0)**(-2./3.)+c_s**2) * (1. + (rhot/rho_1)**(4./3.))**0.5
+			P_res[i-nbeg] = rhot * ((c_0**2 - c_s**2)*(rhot/rho_0)**(-2./3.)+c_s**2) * (1. + (rhot/rho_1)**(4./3.))**0.5
 	
 	P_res = P_res / Unit_P_in_cgs
 
@@ -52,7 +52,7 @@ def sound_speed_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s):
 			c[i-nbeg] = c_0
 		
 		elif rhot > rho_0:
-			c2_tmp = ((c_0*c_0 - c_s*c_s)*(rhot/rho_0)**(-2./3.)+c_s**2) * (1. + (rhot/rho_1)**(4./3.))**0.5
+			c2_tmp = ((c_0**2 - c_s**2)*(rhot/rho_0)**(-2./3.)+c_s**2) * (1. + (rhot/rho_1)**(4./3.))**0.5
 			c[i-nbeg] = c2_tmp**0.5
 		
 	return c / unitVelocity
@@ -84,16 +84,16 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 print('unitVelocity = ', unitVelocity)
 
-T_cld = 54.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_ps  = T_cld#184. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.
-T_0 = 10. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+#T_cld = 54.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+#T_ps  = T_cld#184. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.
+#T_0 = 10. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 
 #---- Constants -----------
 eta = 0.1
 gamma = 5.0/3.0
 alpha = 1.0
 beta = 2.0
-G = 1.0
+#G = 1.0
 #---------------------------
 t = 0.0
 dt = 0.001
@@ -254,7 +254,7 @@ if rank == 0:
 
 #--------- p ----------
 P = 0.
-local_P = P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
+local_P = P_polytrop_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s)
 
 if rank == 0:
 	P = local_P
@@ -269,7 +269,7 @@ P = comm.bcast(P, root = 0)
 
 #--------- c ----------
 c = 0.
-local_c = sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
+local_c = sound_speed_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s)
 
 if rank == 0:
 	c = local_c
@@ -433,7 +433,7 @@ while t < tEnd:
 	#----------------------
 	
 	#--------- p ----------
-	local_P = P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
+	local_P = P_polytrop_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s)
 
 	if rank == 0:
 		P = local_P
@@ -447,7 +447,7 @@ while t < tEnd:
 	#----------------------
 
 	#--------- c ----------
-	local_c = sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps, T_0)
+	local_c = sound_speed_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s)
 
 	if rank == 0:
 		c = local_c
