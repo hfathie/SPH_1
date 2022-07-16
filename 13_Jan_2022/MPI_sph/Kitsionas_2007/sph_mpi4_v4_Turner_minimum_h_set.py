@@ -16,14 +16,10 @@ from shear import *
 
 #----- P_polytrop_mpi
 @njit
-def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
+def P_polytrop_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s):
 
 	M = nend - nbeg
 	P_res = np.zeros(M)
-	mH = 1.6726e-24 # gram
-	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.7 * mH
-	const = kB/mH2
 	
 	for i in range(nbeg, nend):
 		
@@ -43,14 +39,10 @@ def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
 
 #----- sound_speed_mpi
 @njit
-def sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
+def sound_speed_mpi(nbeg, nend, rho, rho_0, rho_1, c_0, c_s):
 
 	M = nend - nbeg
 	c = np.zeros(M)
-	mH = 1.6726e-24 # gram
-	kB = 1.3807e-16  # cm2 g s-2 K-1
-	mH2 = 2.7 * mH
-	const = kB/mH2
 	
 	for i in range(nbeg, nend):
 		
