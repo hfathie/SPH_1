@@ -98,7 +98,7 @@ print('unitTime_in_Myr = ', unitTime_in_Myr)
 filez = np.sort(glob.glob('./Outputs_12k_b_0.2_Mach_10/*.pkl'))
 #filez = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
-j = 1200
+j = 0
 
 #filez = np.sort(glob.glob('./Outputs/*.pkl'))
 
@@ -130,11 +130,11 @@ N = pos.shape[0]
 MSPH = 1.0
 m = np.zeros(N) + MSPH/N
 
-x = [1.00, 1.20]
-y = [0.00, 0.20]
-z = [-0.3, 0.3]
+x = [-1.00, 3.2]
+y = [-1.00, 1.30]
+z = [-1.0, 1.0]
 
-dx = dy = dz = 0.002
+dx = dy = dz = 0.04
 
 xarr = np.arange(x[0]-dx, x[1], dx)
 yarr = zarr = np.arange(y[0]-dy, y[1], dy)

@@ -14,8 +14,6 @@ from mpi4py import MPI
 from shear import *
 
 
-
-
 #----- P_polytrop_mpi
 @njit
 def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
