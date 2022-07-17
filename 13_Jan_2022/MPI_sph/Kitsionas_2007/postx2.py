@@ -10,13 +10,13 @@ import time
 unitTime_in_Myr =  0.6251515693750652 # Myr
 
 
-filz = np.sort(glob.glob('./Outputs/*.pkl'))
+filz = np.sort(glob.glob('./Outputs_4k_b_0.2_Mach_10_hmin_0.05/*.pkl'))
 #filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
 #j = -1
 
 plt.ion()
-fig, ax = plt.subplots(figsize = (10, 6))
+fig, ax = plt.subplots(figsize = (20, 12))
 
 kb = ''
 
@@ -50,7 +50,7 @@ for j in range(0, len(filz), 20):
 	ax.axis(xmin = -1.2, xmax = 3.2)
 	ax.axis(ymin = -1.2, ymax = 1.5)
 	
-	#ax.axis(xmin = 0.9, xmax = 1.3)
+	#ax.axis(xmin = 1.0, xmax = 1.3)
 	#ax.axis(ymin = 0.0, ymax = 0.2)
 	
 	#ax.axis(xmin = +1.00, xmax = 1.20)
