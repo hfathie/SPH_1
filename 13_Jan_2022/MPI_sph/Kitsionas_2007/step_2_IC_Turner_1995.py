@@ -126,7 +126,7 @@ delta_r = Lscale * delta_ksi
 #plt.show()
 
 #=======================================================
-#----------WE DO EVERYTHING IN PHYSICAL UNITS ----------
+#--------- WE DO EVERYTHING IN PHYSICAL UNITS ----------
 #=======================================================
 
 #------- Reading the uniform Sphere of points ----------

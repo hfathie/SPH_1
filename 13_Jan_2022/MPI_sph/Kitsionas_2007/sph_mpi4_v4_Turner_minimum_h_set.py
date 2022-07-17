@@ -70,7 +70,7 @@ nCPUs = comm.Get_size()
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
 Mcld = UnitMass_in_g = 10.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-R_0 = 0.26
+R_0 = 0.26 # see the printed output of step_2_IC_Turner_1995.py
 UnitRadius_in_cm = R_0 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
@@ -93,7 +93,7 @@ eta = 0.1
 gamma = 5.0/3.0
 alpha = 1.0
 beta = 2.0
-#G = 1.0
+G = 1.0
 #---------------------------
 t = 0.0
 dt = 0.001
