@@ -68,14 +68,14 @@ grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
 G = grav_const_in_cgs
 
 
-Mcld = 10. * M_sun
+Mcld = 50. * M_sun
 
 thetax = 3.0 # We choose this value for the xsi.
 
 #---- Speed of Sound ------
 mH = 1.6726e-24 # gram
 kB = 1.3807e-16  # cm2 g s-2 K-1
-T_0 = 35. # K, see Table_1 in Anathpindika - 2009 - II
+T_0 = 54. # K, see Table_1 in Anathpindika - 2009 - II
 
 # Note that for pure molecular hydrogen mu=2. For molecular gas with ~10% He by mass and trace metals, mu ~ 2.7 is often used.
 muu = 2.7
@@ -213,13 +213,13 @@ res2[:, 0] += (2.*1.0 + 2.*hB) # 1.0 is the radius of the cloud !
 
 
 #--- Applying the impact parameter on one of the clouds ---
-b_param = 0.2 # pc
+b_param = 0.0 # pc
 res2[:, 1] = b_param + res2[:, 1] # see Turner et al - 1995
 #----------------------------------------------------------
 
 res12 = np.vstack((res, res2))
 
-Mach = 10./2. # Note that if both cloud have Mach=10 then the relative speed will be Mach = 20 !! You see this !!! So it should be divided by 2.
+Mach = 3./2. # Note that if both cloud have Mach=10 then the relative speed will be Mach = 20 !! You see this !!! So it should be divided by 2.
 vel_ref = Mach * c_0 # The speed of each cloud. Note that the clouds are in a collision course so v1 = -v2.
 
 v_cld_1 = np.zeros_like(res)
