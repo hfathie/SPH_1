@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 10.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-R_0 = 0.26
+UnitMass_in_g = 20.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+R_0 = 0.518
 UnitRadius_in_cm = R_0 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
@@ -28,10 +28,10 @@ G = grav_const_in_cgs
 Mcld = UnitMass_in_g
 
 
-filz = np.sort(glob.glob('./Outputs_19k_b_0.2_Mach_10/*.pkl'))
-#filz = np.sort(glob.glob('./Outputs_no_min_h_set/*.pkl'))
+filz = np.sort(glob.glob('./Outputs/*.pkl'))
+filz = np.sort(glob.glob('./Outputs_Mcloud_20_min_h_0.05/*.pkl'))
 
-j = 1000
+j = 800
 
 with open(filz[j], 'rb') as f:
 	data = pickle.load(f)

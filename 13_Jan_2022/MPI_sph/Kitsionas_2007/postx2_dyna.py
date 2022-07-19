@@ -7,13 +7,12 @@ import readchar
 import time
 
 
-unitTime_in_Myr =  0.6251515693750652 # Myr
+unitTime_in_Myr =  1.2430967917168825 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs_19k_b_0.2_Mach_10/*.pkl'))
-#filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs_Mcloud_20_min_h_0.05/*.pkl'))
 
-#j = -1
 
 plt.ion()
 fig, ax = plt.subplots(figsize = (10, 6))
@@ -32,37 +31,36 @@ for j in range(0, len(filz), 20):
 	h = data['h']
 	
 	print('h = ', np.sort(h))
-	
-	#print(r.shape)
 
 	x = r[:, 0]
 	y = r[:, 1]
 	z = r[:, 2]
 	t = data['current_t']
 	rho = data['rho']
-	#print('rho = ', np.sort(rho))
+	
+	#--- defining the x-y range for the plot ----
+	#xfrac = 0.1
+	#yfrac = 0.1
+	cff = 0.025
+
+	n_max_rho = np.where(rho == np.max(rho))[0]
+	xcen = x[n_max_rho]
+	ycen = y[n_max_rho]
+	xlen = np.max(x) - np.min(x)
+	ylen = np.max(y) - np.min(y)
+	xmin = xcen - cff #xfrac * xlen
+	xmax = xcen + cff #xfrac * xlen
+	ymin = ycen - cff #yfrac * ylen
+	ymax = ycen + cff #yfrac * ylen
+	#--------------------------------------------
 	
 	ax.cla()
 
 	ax.scatter(x, y, s = 0.01, color = 'black')
 	xyrange = 1.2
 	
-	ax.axis(xmin = -1.2, xmax = 3.2)
-	ax.axis(ymin = -1.2, ymax = 1.5)
-	
-	#ax.axis(xmin = 0.9, xmax = 1.3)
-	#ax.axis(ymin = -0.15, ymax = 0.2)
-	
-	#ax.axis(xmin = +1.00, xmax = 1.20)
-	#ax.axis(ymin = +0.05, ymax = 0.28)
-	
-	
-	
-	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
-	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')
-	
-	#ax.axvline(x = -0.5, linestyle = '--', color = 'blue')
-	#ax.axvline(x =  0.5, linestyle = '--', color = 'blue')
+	ax.axis(xmin = xmin, xmax = xmax)
+	ax.axis(ymin = ymin, ymax = ymax)
 	
 	ax.set_title('t = ' + str(np.round(t*unitTime_in_Myr,4)))
 	fig.canvas.flush_events()

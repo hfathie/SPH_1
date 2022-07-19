@@ -68,7 +68,7 @@ grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
 G = grav_const_in_cgs
 
 
-Mcld = 200. * M_sun
+Mcld = 20. * M_sun
 
 thetax = 3.0 # We choose this value for the xsi.
 
@@ -205,7 +205,7 @@ m = np.ones(N_uniform) / N_uniform
 h = do_smoothingX((res, res)) # We don't save this one as this is the h for only one of the clouds.
 rho = getDensity(res, m, h)
 
-hB = 0.0 #np.median(h) # the two clouds will be separated by 2*hB
+hB = np.median(h) # the two clouds will be separated by 2*hB
 
 res2 = res.copy()
 res2[:, 0] += (2.*1.0 + 2.*hB) # 1.0 is the radius of the cloud !
@@ -219,7 +219,7 @@ res2[:, 1] = b_param + res2[:, 1] # see Turner et al - 1995
 
 res12 = np.vstack((res, res2))
 
-Mach = 5./2. # Note that if both cloud have Mach=10 then the relative speed will be Mach = 20 !! You see this !!! So it should be divided by 2.
+Mach = 10./2. # Note that if both cloud have Mach=10 then the relative speed will be Mach = 20 !! You see this !!! So it should be divided by 2.
 vel_ref = Mach * c_0 # The speed of each cloud. Note that the clouds are in a collision course so v1 = -v2.
 
 v_cld_1 = np.zeros_like(res)
