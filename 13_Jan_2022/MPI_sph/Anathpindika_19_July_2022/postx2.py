@@ -11,7 +11,7 @@ unitTime_in_Myr =  3.5174499013053913 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
-#filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs_130k_M_2000_b_0.28/*.pkl'))
 
 #j = -1
 
@@ -61,8 +61,8 @@ for j in range(0, len(filz), 1):
 	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
 	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')
 	
-	#ax.axvline(x = -0.5, linestyle = '--', color = 'blue')
-	#ax.axvline(x =  0.5, linestyle = '--', color = 'blue')
+	#ax.axvline(x =  0.0, linestyle = '--', color = 'blue')
+	#ax.axvline(x =  2.0, linestyle = '--', color = 'blue')
 	
 	ax.set_title('t = ' + str(np.round(t*unitTime_in_Myr,4)))
 	fig.canvas.flush_events()
