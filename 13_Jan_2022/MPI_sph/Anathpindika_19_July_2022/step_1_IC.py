@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 
-stp = 0.08
+stp = 0.10
 x = np.arange(-1.1, 1.1, stp)
 y = np.arange(-1.1, 1.1, stp)
 z = np.arange(-1.1, 1.1, stp)

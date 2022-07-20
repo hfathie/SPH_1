@@ -135,7 +135,7 @@ beta = 2.0 * alpha # 1.0   # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.001
+dt = 0.0001
 tEnd = 8.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
@@ -583,9 +583,10 @@ while t < tEnd:
 
 	if rank == 0:
 		ii += 1
-		dictx = {'pos': r, 'v': v, 'm': m, 'dt': dt, 'current_t': t, 'rho': rho, 'h': h}
-		with open('./Outputs/' + str(ii).zfill(5) + '.pkl', 'wb') as f:
-			pickle.dump(dictx, f)
+		if not (ii%200):
+			dictx = {'pos': r, 'v': v, 'm': m, 'dt': dt, 'current_t': t, 'rho': rho, 'h': h}
+			with open('./Outputs/' + str(ii).zfill(5) + '.pkl', 'wb') as f:
+				pickle.dump(dictx, f)
 	
 	if rank == 0:
 		print('Loop time = ', time.time() - TLoop)

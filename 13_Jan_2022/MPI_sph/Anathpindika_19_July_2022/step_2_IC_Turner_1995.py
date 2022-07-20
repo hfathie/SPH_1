@@ -68,14 +68,14 @@ grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
 G = grav_const_in_cgs
 
 
-Mcld = 50. * M_sun
+Mcld = 2000. * M_sun
 
 thetax = 3.0 # We choose this value for the xsi.
 
 #---- Speed of Sound ------
 mH = 1.6726e-24 # gram
 kB = 1.3807e-16  # cm2 g s-2 K-1
-T_0 = 54. # K, see Table_1 in Anathpindika - 2009 - II
+T_0 = 377. # K, see Table_1 in Anathpindika - 2009 - II   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Note that for pure molecular hydrogen mu=2. For molecular gas with ~10% He by mass and trace metals, mu ~ 2.7 is often used.
 muu = 2.7
@@ -213,7 +213,7 @@ res2[:, 0] += (2.*1.0 + 2.*hB) # 1.0 is the radius of the cloud !
 
 
 #--- Applying the impact parameter on one of the clouds ---
-b_param = 0.0 # pc
+b_param = 0.28 # pc
 res2[:, 1] = b_param + res2[:, 1] # see Turner et al - 1995
 #----------------------------------------------------------
 

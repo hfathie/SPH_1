@@ -41,22 +41,22 @@ for j in range(0, len(filz), 1):
 	#--- defining the x-y range for the plot ----
 	#xfrac = 0.1
 	#yfrac = 0.1
-	cff = 0.2
+	cff = 0.4
 
 	n_max_rho = np.where(rho == np.max(rho))[0]
-	xcen = x[n_max_rho]
+	zcen = z[n_max_rho]
 	ycen = y[n_max_rho]
-	xlen = np.max(x) - np.min(x)
+	zlen = np.max(z) - np.min(z)
 	ylen = np.max(y) - np.min(y)
-	xmin = xcen - cff #xfrac * xlen
-	xmax = xcen + cff #xfrac * xlen
+	xmin = zcen - cff #xfrac * xlen
+	xmax = zcen + cff #xfrac * xlen
 	ymin = ycen - cff #yfrac * ylen
 	ymax = ycen + cff #yfrac * ylen
 	#--------------------------------------------
 	
 	ax.cla()
 
-	ax.scatter(x, y, s = 0.01, color = 'black')
+	ax.scatter(y, z, s = 0.01, color = 'black')
 	xyrange = 1.2
 	
 	ax.axis(xmin = xmin, xmax = xmax)

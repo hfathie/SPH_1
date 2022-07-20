@@ -7,10 +7,10 @@ import readchar
 import time
 
 
-unitTime_in_Myr =  0.6251515693750652 # Myr
+unitTime_in_Myr =  3.5174499013053913 # Myr
 
 
-filz = np.sort(glob.glob('./Outputs_19k_b_0.2_Mach_10/*.pkl'))
+filz = np.sort(glob.glob('./Outputs/*.pkl'))
 #filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
 #j = -1
@@ -20,7 +20,7 @@ fig, ax = plt.subplots(figsize = (10, 6))
 
 kb = ''
 
-for j in range(0, len(filz), 20):
+for j in range(0, len(filz), 1):
 
 	print('j = ', j)
 
