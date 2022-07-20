@@ -61,8 +61,8 @@ for j in range(0, len(filz), 10):
     #ax.axvline(x =  2.0, linestyle = '--', color = 'blue')
     ax.axvline(x =  x[ncen], linestyle = '--', color = 'red')
 
-    #ax.set_title('t = ' + str(np.round(t*unitTime_in_Myr,4)) + '     d = ')
-    ax.set_title(f't = {np.round(t*unitTime_in_Myr,4)}    d = {round(x[ncen][0], 2)}')
+    R_0 = 4.81 # Take this from the terminal after running the step_2_IC....py !
+    ax.set_title(f't = {np.round(t*unitTime_in_Myr,4)}        d = {round(x[ncen][0]*R_0, 2)} pc')
     fig.canvas.flush_events()
     time.sleep(0.01)
 
