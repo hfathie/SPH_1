@@ -11,16 +11,16 @@ unitTime_in_Myr =  3.5174499013053913 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
-#filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
+filz = np.sort(glob.glob('./Outputs_Model_4_5k/*.pkl'))
 
 #j = -1
 
 plt.ion()
-fig, ax = plt.subplots(figsize = (10, 6))
+fig, ax = plt.subplots(figsize = (8, 6))
 
 kb = ''
 
-for j in range(0, len(filz), 1):
+for j in range(0, len(filz), 10):
 
 	print('j = ', j)
 
@@ -45,7 +45,7 @@ for j in range(0, len(filz), 1):
 	ax.cla()
 
 	ax.scatter(y, z, s = 0.01, color = 'black')
-	xyrange = 0.8
+	xyrange = 1.0
 	
 	#ax.axis(xmin = -1.2, xmax = 3.2)
 	#ax.axis(ymin = -1.2, ymax = 1.5)

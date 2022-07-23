@@ -16,11 +16,11 @@ filz = np.sort(glob.glob('./Outputs/*.pkl'))
 #j = -1
 
 plt.ion()
-fig, ax = plt.subplots(figsize = (10, 6))
+fig, ax = plt.subplots(figsize = (8, 5))
 
 kb = ''
 
-for j in range(0, len(filz), 1):
+for j in range(0, len(filz), 20):
 
 	print('j = ', j)
 

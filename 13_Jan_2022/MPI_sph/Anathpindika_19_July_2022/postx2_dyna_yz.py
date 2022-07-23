@@ -11,7 +11,7 @@ unitTime_in_Myr =  3.5174499013053913 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
-#filz = np.sort(glob.glob('./Outputs_Mcloud_20_min_h_0.05/*.pkl'))
+filz = np.sort(glob.glob('./Outputs_Model_4_15k_Tps_1382/*.pkl'))
 
 
 plt.ion()

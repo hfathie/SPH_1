@@ -77,6 +77,40 @@ def sound_speed_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
 
 	M = nend - nbeg
 	c = np.zeros(M)
+
+	mH = 1.6726e-24 # gram
+	kB = 1.3807e-16  # cm2 g s-2 K-1
+	mH2 = 2.7 * mH
+
+	kBmH2 = kB/mH2
+	
+	for i in range(nbeg, nend):
+		
+		rhot = rho[i]*UnitDensity_in_cgs
+		
+		if rhot <= 1.0e-21:
+			c[i-nbeg] = (kBmH2 * T_cld)**0.5
+
+		if (rhot > 1.0e-21) & (rhot <= 2.0e-21):
+			c[i-nbeg] = (kBmH2 * gamma * T_cld * (rhot/2.0e-21)**(gamma - 1.0))**0.5
+
+		if (rhot > 2.0e-21) & (rhot <= 1.0e-18):
+			c[i-nbeg] = (kBmH2 * T_ps)**0.5
+		
+		if rhot > 1.0e-18:
+			c[i-nbeg] = (kBmH2 * T_0 * (1.0 + gamma * (rhot/1.0e-14)**(gamma - 1.0)))**0.5
+		
+	return c / unitVelocity
+
+
+
+
+#----- sound_speed_mpi
+@njit
+def sound_speed_mpi___XXXX(nbeg, nend, rho, T_cld, T_ps, T_0):
+
+	M = nend - nbeg
+	c = np.zeros(M)
 	mH = 1.6726e-24 # gram
 	kB = 1.3807e-16  # cm2 g s-2 K-1
 	mH2 = 2.7 * mH
@@ -125,7 +159,7 @@ print('unitVelocity = ', unitVelocity)
 
 T_cld = 377.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 T_0 = 10. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_ps  = T_0 #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.
+T_ps  = 1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
 
 #---- Constants -----------
 eta = 0.1
@@ -136,7 +170,7 @@ G = 1.0
 #---------------------------
 t = 0.0
 dt = 0.001
-tEnd = 8.0
+tEnd = 5.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
 minimum_h = 0.05 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -151,7 +185,7 @@ except:
 
 
 
-with open('Data_Turner.pkl', 'rb') as f:
+with open('Data_Turner_RND.pkl', 'rb') as f:
 	data = pickle.load(f)
 
 r = data['r']

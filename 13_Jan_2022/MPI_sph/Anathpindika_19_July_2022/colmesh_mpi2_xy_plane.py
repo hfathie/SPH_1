@@ -82,8 +82,8 @@ nCPUs = comm.Get_size()
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 10.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-UnitRadius_in_cm = 0.26 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+UnitRadius_in_cm = 0.84 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
@@ -95,10 +95,10 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
 
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 
-filez = np.sort(glob.glob('./Outputs_12k_b_0.2_Mach_10/*.pkl'))
+filez = np.sort(glob.glob('./Outputs_Mach_1.0/*.pkl'))
 #filez = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
-j = 0
+j = 900
 
 #filez = np.sort(glob.glob('./Outputs/*.pkl'))
 
@@ -134,7 +134,7 @@ x = [-1.00, 3.2]
 y = [-1.00, 1.30]
 z = [-1.0, 1.0]
 
-dx = dy = dz = 0.04
+dx = dy = dz = 0.05
 
 xarr = np.arange(x[0]-dx, x[1], dx)
 yarr = zarr = np.arange(y[0]-dy, y[1], dy)

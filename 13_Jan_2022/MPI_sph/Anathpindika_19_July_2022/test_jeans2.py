@@ -28,10 +28,12 @@ G = grav_const_in_cgs
 Mcld = UnitMass_in_g
 
 
-filz = np.sort(glob.glob('./Outputs/*.pkl'))
-#filz = np.sort(glob.glob('./Outputs_no_min_h_set/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs/*.pkl'))
+filz = np.sort(glob.glob('./Outputs_Model_4_15k_Tps_1382/*.pkl'))
 
-j = 28
+#filz = np.sort(glob.glob('./Outputs_Model_4_15k/*.pkl'))
+
+j = 640
 
 with open(filz[j], 'rb') as f:
 	data = pickle.load(f)
