@@ -117,7 +117,7 @@ zz = pos[:, 2]
 	#plt.show()
 
 N = r.shape[0]
-m = 1.0 / N + np.zeros(N)
+m = 1.0 / (N/2) + np.zeros(N) # Note that m should be calculated like this !
 
 h = data['h'] #do_smoothingX((r, r))
 
@@ -125,10 +125,6 @@ rho = data['rho'] * UnitDensity_in_cgs #getDensity(r, m, h) * UnitDensity_in_cgs
 
 print('rho = ', np.sort(rho))
 
-
-N = pos.shape[0]
-MSPH = 1.0
-m = np.zeros(N) + MSPH/N
 
 x = [-1.00, 3.2]
 y = [-1.00, 1.30]

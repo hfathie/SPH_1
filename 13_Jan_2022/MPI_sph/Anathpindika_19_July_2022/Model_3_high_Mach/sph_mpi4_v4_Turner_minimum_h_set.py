@@ -56,10 +56,10 @@ def P_polytrop_mpi(nbeg, nend, rho, T_cld, T_ps, T_0):
 		if rhot <= 1.0e-21:
 			P_res[i-nbeg] = rhot * kBmH2 * T_cld
 
-		if (rhot > 1.0e-21) & (rhot <= 2.0e-21):
-			P_res[i-nbeg] = rhot * kBmH2 * gamma * T_cld * (rhot/2.0e-21)**(gamma - 1.0)
+		if (rhot > 1.0e-21) & (rhot <= 5.0e-21):
+			P_res[i-nbeg] = rhot * kBmH2 * gamma * T_cld * (rhot/5.0e-21)**(gamma - 1.0)
 
-		if (rhot > 2.0e-21) & (rhot <= 1.0e-18):
+		if (rhot > 5.0e-21) & (rhot <= 1.0e-18):
 			P_res[i-nbeg] = rhot * kBmH2 * T_ps
 		
 		if rhot > 1.0e-18:
@@ -138,8 +138,8 @@ nCPUs = comm.Get_size()
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-Mcld = UnitMass_in_g = 2000.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-R_0 = 4.81 # see the printed output of step_2_IC_Turner_1995.py
+Mcld = UnitMass_in_g = 400.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+R_0 = 2.13 # see the printed output of step_2_IC_Turner_1995.py
 UnitRadius_in_cm = R_0 * 3.086e18  #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
@@ -153,8 +153,8 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 print('unitVelocity = ', unitVelocity)
 
-T_cld = 377.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_0 = 10. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+T_cld = 170.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+T_0 = T_cld #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 T_ps  = T_0 #1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
 
 #---- Constants -----------
@@ -165,7 +165,7 @@ beta = 2.0 * alpha # 1.0   # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.001
+dt = 0.0002
 tEnd = 5.0
 Nt = int(np.ceil(tEnd/dt)+1)
 

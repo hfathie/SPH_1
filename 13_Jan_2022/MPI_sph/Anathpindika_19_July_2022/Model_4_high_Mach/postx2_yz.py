@@ -7,23 +7,22 @@ import readchar
 import time
 
 
-unitTime_in_Myr =  3.5174499013053913 # Myr
+unitTime_in_Myr =  2.3177399857732617 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
-filz = np.sort(glob.glob('./Outputs_alpha_0.5/*.pkl'))
-filz = np.sort(glob.glob('./Outputs_alpha_1.0/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs_alpha_0.5/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs_alpha_1.0/*.pkl'))
 #filz = np.sort(glob.glob('./Outputs_alpha_2.0/*.pkl'))
-filz = np.sort(glob.glob('./Outputs_alpha_1.5/*.pkl'))
 
 #j = -1
 
 plt.ion()
-fig, ax = plt.subplots(figsize = (8, 5))
+fig, ax = plt.subplots(figsize = (8, 6))
 
 kb = ''
 
-for j in range(0, len(filz), 20):
+for j in range(0, len(filz), 10):
 
 	print('j = ', j)
 
@@ -47,14 +46,14 @@ for j in range(0, len(filz), 20):
 	
 	ax.cla()
 
-	ax.scatter(x, y, s = 0.01, color = 'black')
-	xyrange = 1.2
+	ax.scatter(y, z, s = 0.01, color = 'black')
+	xyrange = 1.0
 	
-	ax.axis(xmin = -1.2, xmax = 3.2)
-	ax.axis(ymin = -1.2, ymax = 1.5)
+	#ax.axis(xmin = -1.2, xmax = 3.2)
+	#ax.axis(ymin = -1.2, ymax = 1.5)
 	
-	#ax.axis(xmin = 0.9, xmax = 1.3)
-	#ax.axis(ymin = -0.15, ymax = 0.2)
+	ax.axis(xmin = -xyrange, xmax = xyrange)
+	ax.axis(ymin = -xyrange, ymax = xyrange)
 	
 	#ax.axis(xmin = +1.00, xmax = 1.20)
 	#ax.axis(ymin = +0.05, ymax = 0.28)
@@ -64,8 +63,8 @@ for j in range(0, len(filz), 20):
 	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
 	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')
 	
-	#ax.axvline(x =  0.0, linestyle = '--', color = 'blue')
-	#ax.axvline(x =  2.0, linestyle = '--', color = 'blue')
+	#ax.axvline(x = -0.5, linestyle = '--', color = 'blue')
+	#ax.axvline(x =  0.5, linestyle = '--', color = 'blue')
 	
 	ax.set_title('t = ' + str(np.round(t*unitTime_in_Myr,4)))
 	fig.canvas.flush_events()

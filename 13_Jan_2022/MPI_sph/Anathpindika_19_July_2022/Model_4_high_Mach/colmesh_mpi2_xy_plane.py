@@ -1,5 +1,4 @@
 
-# This is in the x-z plane.
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -83,8 +82,8 @@ nCPUs = comm.Get_size()
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 10.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-UnitRadius_in_cm = 0.26 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitMass_in_g = 400.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+UnitRadius_in_cm = 2.13 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
@@ -96,9 +95,10 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
 
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 
-filez = np.sort(glob.glob('./Outputs_12k_b_0.2_Mach_10/*.pkl'))
+filez = np.sort(glob.glob('./Outputs_10k/*.pkl'))
+#filez = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
-j = 1210
+j = 1060
 
 #filez = np.sort(glob.glob('./Outputs/*.pkl'))
 
@@ -118,6 +118,7 @@ zz = pos[:, 2]
 
 N = r.shape[0]
 m = 1.0 / (N/2) + np.zeros(N) # Note that m should be calculated like this !
+m = np.hstack((m, m))
 
 h = data['h'] #do_smoothingX((r, r))
 
@@ -125,13 +126,11 @@ rho = data['rho'] * UnitDensity_in_cgs #getDensity(r, m, h) * UnitDensity_in_cgs
 
 print('rho = ', np.sort(rho))
 
-xxyy = 1.0
-#x = [-xxyy, xxyy]
-x = [-0.9, 1.3]
-y = [0, 0.2]
-z = [-0.3, 0.3]
+x = [-1.00, 3.2]
+y = [-1.00, 1.30]
+z = [-1.0, 1.0]
 
-dx = dy = dz = 0.02
+dx = dy = dz = 0.05
 
 xarr = np.arange(x[0]-dx, x[1], dx)
 yarr = zarr = np.arange(y[0]-dy, y[1], dy)
@@ -139,7 +138,7 @@ yarr = zarr = np.arange(y[0]-dy, y[1], dy)
 print(len(xarr) * len(yarr) * len(zarr))
 
 
-Nx = len(yarr)
+Nx = len(xarr)
 #------- used in MPI --------
 count = Nx // nCPUs
 remainder = Nx % nCPUs
@@ -163,12 +162,12 @@ def get_rho_mpi(nbeg, nend, xarr, yarr, zarr, pos, h):
 
 	for i in range(nbeg, nend):
 
-		for j in range(len(zarr)):
+		for j in range(len(yarr)):
 			
 			s = 0.
-			for k in range(len(xarr)):
+			for k in range(len(zarr)):
 				
-				r = np.array([xarr[k], yarr[i], zarr[j]])
+				r = np.array([xarr[i], yarr[j], zarr[k]])
 				hs = do_smoothingX_single(r, pos)
 				
 				WI = W_I(r, pos, hs, h)
@@ -180,6 +179,15 @@ def get_rho_mpi(nbeg, nend, xarr, yarr, zarr, pos, h):
 	return rho
 
 
+
+
+#------------ h -------------
+#with open('hh.pkl', 'rb') as f:
+#	h = pickle.load(f)
+
+#h = data['h']
+
+#----------------------------
 
 
 #-------- rho ---------

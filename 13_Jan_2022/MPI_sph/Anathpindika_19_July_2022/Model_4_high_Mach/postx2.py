@@ -7,14 +7,14 @@ import readchar
 import time
 
 
-unitTime_in_Myr =  3.5174499013053913 # Myr
+unitTime_in_Myr =  2.3177399857732617 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
-filz = np.sort(glob.glob('./Outputs_alpha_0.5/*.pkl'))
-filz = np.sort(glob.glob('./Outputs_alpha_1.0/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs_alpha_0.5/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs_alpha_1.0/*.pkl'))
 #filz = np.sort(glob.glob('./Outputs_alpha_2.0/*.pkl'))
-filz = np.sort(glob.glob('./Outputs_alpha_1.5/*.pkl'))
+#filz = np.sort(glob.glob('./Outputs_alpha_1.5/*.pkl'))
 
 #j = -1
 
