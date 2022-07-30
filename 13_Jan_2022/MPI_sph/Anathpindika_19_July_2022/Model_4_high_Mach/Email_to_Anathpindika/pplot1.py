@@ -4,6 +4,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import matplotlib
+matplotlib.rcParams.update({'font.size': 22})
 
 
 M_sun = 1.989e33 # gram
@@ -20,7 +22,7 @@ unitTime_in_yr = unitTime / 3600. / 24. / 365.25
 unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
 
 
-with open('Nxy.pkl', 'rb') as f:
+with open('Nxy_Tps_6000.pkl', 'rb') as f:
 #with open('/mnt/Linux_Shared_Folder_2022/AWS_16_April_Done/Nxy.pkl', 'rb') as f:
 	data = pickle.load(f)
 
@@ -52,18 +54,14 @@ m, n = colden_Msun_pc2.shape
 data = np.zeros(colden_Msun_pc2.shape)
 
 
-#for i in range(m):
-#	for j in range(n):
-#		data[m-1-i, j] = colden_Msun_pc2[i, j]
-
-
 for i in range(m):
 	for j in range(n):
 		data[i, n-1-j] = colden_Msun_pc2[i, j]
 
 
 plt.figure(figsize = (12, 8))
-plt.imshow(data.T, cmap = 'rainbow_r')
+plt.imshow(data.T, extent = [-2.5, 4.0, -2.0, 2.5], cmap = 'rainbow_r')
+
 
 plt.clim(0, 1.85)
 

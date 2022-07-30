@@ -6,7 +6,7 @@ import pickle
 res = []
 count = 0
 
-Nparticles = 16000
+Nparticles = 5000
 
 while count < Nparticles:
 	

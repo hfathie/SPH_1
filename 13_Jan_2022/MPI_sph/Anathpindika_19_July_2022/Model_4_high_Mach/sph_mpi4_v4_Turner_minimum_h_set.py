@@ -138,8 +138,8 @@ nCPUs = comm.Get_size()
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-Mcld = UnitMass_in_g = 400.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-R_0 = 2.13 # see the printed output of step_2_IC_Turner_1995.py
+Mcld = UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+R_0 = 0.84 # see the printed output of step_2_IC_Turner_1995.py
 UnitRadius_in_cm = R_0 * 3.086e18  #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
@@ -153,9 +153,9 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 print('unitVelocity = ', unitVelocity)
 
-T_cld = 170.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
+T_cld = 54.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 T_0 = T_cld #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_ps  = T_0 #1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
+T_ps  = 6000. #1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
 
 #---- Constants -----------
 eta = 0.1
@@ -169,7 +169,7 @@ dt = 0.0002
 tEnd = 5.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
-minimum_h = 0.05 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+minimum_h = 0.01 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 filz = np.sort(os.listdir('./Outputs'))

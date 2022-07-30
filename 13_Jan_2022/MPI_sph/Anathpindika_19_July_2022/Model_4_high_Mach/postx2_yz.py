@@ -7,7 +7,7 @@ import readchar
 import time
 
 
-unitTime_in_Myr =  2.3177399857732617 # Myr
+unitTime_in_Myr =  1.6235259353083704 # Myr
 
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))

@@ -155,7 +155,7 @@ print('unitVelocity = ', unitVelocity)
 
 T_cld = 170.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 T_0 = T_cld #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_ps  = T_0 #1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
+T_ps  = 11000. #1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
 
 #---- Constants -----------
 eta = 0.1
@@ -165,7 +165,7 @@ beta = 2.0 * alpha # 1.0   # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.0002
+dt = 0.0001
 tEnd = 5.0
 Nt = int(np.ceil(tEnd/dt)+1)
 

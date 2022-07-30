@@ -7,7 +7,7 @@ import glob
 from numba import njit
 import time
 from mpi4py import MPI
-from libsx import *
+#from libsx import *
 
 
 #----- densityx
@@ -70,6 +70,9 @@ def W_I(r, pos, hs, h): # r is the coordinate of a single point. pos contains th
 		if (q > 1.0) and (q <= 2.0):
 			WI[j] = sig / hij**3 * (1.0/4.0) * (2.0 - q)**3
 
+		if q <= 0.0:
+			WI[j] = 0.0
+
 	return  WI
 
 
@@ -82,8 +85,8 @@ nCPUs = comm.Get_size()
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 400.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-UnitRadius_in_cm = 2.13 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+UnitRadius_in_cm = 0.84 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
@@ -96,17 +99,15 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 
 filez = np.sort(glob.glob('./Outputs_10k/*.pkl'))
-#filez = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
 
-j = 1060
+j = 820
 
-#filez = np.sort(glob.glob('./Outputs/*.pkl'))
 
 #with open('Uniform_density_sphere.pkl', 'rb') as f:
 with open(filez[j], 'rb') as f:
 	data = pickle.load(f)
 
-r = pos = data['pos']
+pos = data['pos']
 
 xx = pos[:, 0]
 yy = pos[:, 1]
@@ -116,9 +117,9 @@ zz = pos[:, 2]
 	#plt.scatter(xx, yy, s = 0.1)
 	#plt.show()
 
-N = r.shape[0]
+N = pos.shape[0]
 m = 1.0 / (N/2) + np.zeros(N) # Note that m should be calculated like this !
-m = np.hstack((m, m))
+#m = np.hstack((m, m))
 
 h = data['h'] #do_smoothingX((r, r))
 
@@ -126,14 +127,15 @@ rho = data['rho'] * UnitDensity_in_cgs #getDensity(r, m, h) * UnitDensity_in_cgs
 
 print('rho = ', np.sort(rho))
 
-x = [-1.00, 3.2]
-y = [-1.00, 1.30]
+x = [-2.5, 4.0]
+y = [-2.0, 2.5]
 z = [-1.0, 1.0]
 
-dx = dy = dz = 0.05
+dx = dy = dz = 0.04
 
 xarr = np.arange(x[0]-dx, x[1], dx)
-yarr = zarr = np.arange(y[0]-dy, y[1], dy)
+yarr = np.arange(y[0]-dy, y[1], dy)
+zarr = np.arange(z[0]-dz, z[1], dz)
 
 print(len(xarr) * len(yarr) * len(zarr))
 
@@ -173,21 +175,10 @@ def get_rho_mpi(nbeg, nend, xarr, yarr, zarr, pos, h):
 				WI = W_I(r, pos, hs, h)
 				
 				s += densityx(m, WI)
-			
+
 			rho[i-nbeg, j] = s
-		
+
 	return rho
-
-
-
-
-#------------ h -------------
-#with open('hh.pkl', 'rb') as f:
-#	h = pickle.load(f)
-
-#h = data['h']
-
-#----------------------------
 
 
 #-------- rho ---------
@@ -217,6 +208,8 @@ dictx = {'rho': rho, 'dx': dx}
 if rank == 0:
 	with open('Nxy.pkl', 'wb') as f:
 		pickle.dump(dictx, f)
+
+#print(rho)
 
 
 

@@ -82,8 +82,8 @@ nCPUs = comm.Get_size()
 
 M_sun = 1.989e33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
-UnitMass_in_g = 400.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
-UnitRadius_in_cm = 2.13 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+UnitRadius_in_cm = 0.84 * 3.086e18 # cm (2.0 pc)    #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
@@ -95,10 +95,10 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
 
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 
-filez = np.sort(glob.glob('./Outputs_16k/*.pkl'))
-#filez = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
+#filez = np.sort(glob.glob('./Outputs_5k/*.pkl'))
+filez = np.sort(glob.glob('./Outputs_5k_Tps_eq_Tcld/*.pkl'))
 
-j = 300
+j = 740
 
 #filez = np.sort(glob.glob('./Outputs/*.pkl'))
 

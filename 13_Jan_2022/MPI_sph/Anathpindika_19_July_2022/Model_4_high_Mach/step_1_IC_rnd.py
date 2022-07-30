@@ -3,10 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+np.random.random(42)
+
 res = []
 count = 0
 
-Nparticles = 16000
+Nparticles = 10000
 
 while count < Nparticles:
 	

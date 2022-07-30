@@ -118,7 +118,7 @@ zz = pos[:, 2]
 
 N = r.shape[0]
 m = 1.0 / (N/2) + np.zeros(N) # Note that m should be calculated like this !
-m = np.hstack((m, m))
+#m = np.hstack((m, m))
 
 h = data['h'] #do_smoothingX((r, r))
 
