@@ -6,4 +6,4 @@ __pycache__/
 *.zip
 *.tgz
 *.dat
-*hdf5
+*.hdf5
