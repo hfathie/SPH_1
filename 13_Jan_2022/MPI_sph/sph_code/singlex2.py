@@ -126,13 +126,12 @@ fig, ax = plt.subplots(3, figsize = (16, 9))
 
 kb = ''
 res = []
-tt = 0
 
 gamma = 5./3.
 
 
 
-j = 800
+j = 1803
 
 with open(dirx + filez[j], 'rb') as f:
 	dictx = pickle.load(f)
@@ -142,6 +141,8 @@ r = dictx['pos']
 rx = r[:, 0]
 ry = r[:, 1]
 rz = r[:, 2]
+
+tt = dictx['current_t']
 
 rr = np.sqrt(rx**2 + ry**2 + rz**2)
 	

@@ -9,13 +9,17 @@ import time
 
 unitTime_in_Myr =  1.6235259353083704 # Myr
 
+M_sun = 1.989e33 # gram
+grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
+Mcld = UnitMass_in_g = 50.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+R_0 = 0.84 # see the printed output of step_2_IC_Turner_1995.py
+UnitRadius_in_cm = R_0 * 3.086e18  #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
+
+
 
 filz = np.sort(glob.glob('./Outputs/*.pkl'))
-#filz = np.sort(glob.glob('./Outputs_alpha_0.5/*.pkl'))
-#filz = np.sort(glob.glob('./Outputs_alpha_1.0/*.pkl'))
-#filz = np.sort(glob.glob('./Outputs_alpha_2.0/*.pkl'))
 
-#j = -1
 
 plt.ion()
 fig, ax = plt.subplots(figsize = (8, 6))
@@ -42,7 +46,7 @@ for j in range(0, len(filz), 10):
 	z = r[:, 2]
 	t = data['current_t']
 	rho = data['rho']
-	#print('rho = ', np.sort(rho))
+	print('rho = ', np.sort(rho*UnitDensity_in_cgs))
 	
 	ax.cla()
 
@@ -55,16 +59,6 @@ for j in range(0, len(filz), 10):
 	ax.axis(xmin = -xyrange, xmax = xyrange)
 	ax.axis(ymin = -xyrange, ymax = xyrange)
 	
-	#ax.axis(xmin = +1.00, xmax = 1.20)
-	#ax.axis(ymin = +0.05, ymax = 0.28)
-	
-	
-	
-	#ax.axhline(y = -0.5, linestyle = '--', color = 'blue')
-	#ax.axhline(y =  0.5, linestyle = '--', color = 'blue')
-	
-	#ax.axvline(x = -0.5, linestyle = '--', color = 'blue')
-	#ax.axvline(x =  0.5, linestyle = '--', color = 'blue')
 	
 	ax.set_title('t = ' + str(np.round(t*unitTime_in_Myr,4)))
 	fig.canvas.flush_events()

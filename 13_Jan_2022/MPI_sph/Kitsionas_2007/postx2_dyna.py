@@ -10,7 +10,7 @@ import time
 unitTime_in_Myr =  1.2430967917168825 # Myr
 
 
-filz = np.sort(glob.glob('./Outputs_19k_b_0.2_Mach_10/*.pkl'))
+filz = np.sort(glob.glob('./Outputs/*.pkl'))
 #filz = np.sort(glob.glob('./Outputs_Mcloud_20_min_h_0.05/*.pkl'))
 
 
@@ -19,7 +19,7 @@ fig, ax = plt.subplots(figsize = (10, 6))
 
 kb = ''
 
-for j in range(0, len(filz), 20):
+for j in range(800, len(filz), 2):
 
 	print('j = ', j)
 
@@ -41,7 +41,7 @@ for j in range(0, len(filz), 20):
 	#--- defining the x-y range for the plot ----
 	#xfrac = 0.1
 	#yfrac = 0.1
-	cff = 0.025
+	cff = 0.02
 
 	n_max_rho = np.where(rho == np.max(rho))[0]
 	xcen = x[n_max_rho]
@@ -56,7 +56,7 @@ for j in range(0, len(filz), 20):
 	
 	ax.cla()
 
-	ax.scatter(x, y, s = 0.01, color = 'black')
+	ax.scatter(x, y, s = 0.05, color = 'black')
 	xyrange = 1.2
 	
 	ax.axis(xmin = xmin, xmax = xmax)

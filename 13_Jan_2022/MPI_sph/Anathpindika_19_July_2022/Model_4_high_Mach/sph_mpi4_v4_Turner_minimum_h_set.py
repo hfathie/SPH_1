@@ -155,7 +155,7 @@ print('unitVelocity = ', unitVelocity)
 
 T_cld = 54.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
 T_0 = T_cld #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-T_ps  = 6000. #1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
+T_ps  = T_0 #6000. #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
 
 #---- Constants -----------
 eta = 0.1
@@ -165,11 +165,11 @@ beta = 2.0 * alpha # 1.0   # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 G = 1.0
 #---------------------------
 t = 0.0
-dt = 0.0002
+dt = 0.0001
 tEnd = 5.0
 Nt = int(np.ceil(tEnd/dt)+1)
 
-minimum_h = 0.01 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+minimum_h = 0.0001 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 filz = np.sort(os.listdir('./Outputs'))
@@ -610,6 +610,8 @@ while t < tEnd:
 	if rank == 0:
 		if not (ii%50):
 			print('h/c = ', np.sort(h/c))
+			print('h = ', np.sort(h))
+			print('rho = ', np.sort(rho)*UnitDensity_in_cgs)
 
 	if rank == 0:
 		ii += 1

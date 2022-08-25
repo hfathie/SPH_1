@@ -96,7 +96,7 @@ unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1e6
 print('unitTime_in_Myr = ', unitTime_in_Myr)
 
 #filez = np.sort(glob.glob('./Outputs_5k/*.pkl'))
-filez = np.sort(glob.glob('./Outputs_5k_Tps_eq_Tcld/*.pkl'))
+filez = np.sort(glob.glob('./Outputs/*.pkl'))
 
 j = 740
 

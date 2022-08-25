@@ -63,9 +63,9 @@ for i in range(m):
 
 
 plt.figure(figsize = (12, 8))
-plt.imshow(data.T, cmap = 'rainbow_r')
+plt.imshow(data.T, cmap = 'gist_rainbow')
 
-plt.clim(0, 1.85)
+plt.clim(0, 2.8)
 
 plt.colorbar()
 

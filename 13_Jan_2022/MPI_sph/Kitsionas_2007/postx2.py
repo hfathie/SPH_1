@@ -8,10 +8,15 @@ import time
 
 
 unitTime_in_Myr =  0.6251515693750652 # Myr
+M_sun = 1.989e33 # gram
+grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
+Mcld = UnitMass_in_g = 10.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
+R_0 = 0.26 # see the printed output of step_2_IC_Turner_1995.py
+UnitRadius_in_cm = R_0 * 3.086e18  #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 
 
-filz = np.sort(glob.glob('./Outputs_19k_b_0.2_Mach_10/*.pkl'))
-#filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Outputs_9_May/*.pkl'))
+filz = np.sort(glob.glob('./Outputs_4k_Mach_5_b_0.4_M_10/*.pkl'))
 
 #j = -1
 
@@ -20,7 +25,7 @@ fig, ax = plt.subplots(figsize = (10, 6))
 
 kb = ''
 
-for j in range(0, len(filz), 20):
+for j in range(0, len(filz), 5):
 
 	print('j = ', j)
 
@@ -40,7 +45,7 @@ for j in range(0, len(filz), 20):
 	z = r[:, 2]
 	t = data['current_t']
 	rho = data['rho']
-	#print('rho = ', np.sort(rho))
+	print('rho = ', np.sort(rho)*UnitDensity_in_cgs)
 	
 	ax.cla()
 
