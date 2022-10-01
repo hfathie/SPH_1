@@ -19,7 +19,7 @@ print(f'UnitDensity_in_cgs = {UnitDensity_in_cgs} g/cm^3')
 
 #filz = np.sort(glob.glob('./Outputs_a_0.5_B_0.04_mine/*.pkl'))
 
-filz = np.sort(glob.glob('./Outputs/*.pkl'))
+filz = np.sort(glob.glob('./Outputs_18k/*.pkl'))
 
 #filz = np.sort(glob.glob('/mnt/Linux_Shared_Folder_2022/Output_21_August/*.pkl'))
 
@@ -32,7 +32,7 @@ fig, ax = plt.subplots(figsize = (6, 5))
 
 kb = ''
 
-for j in range(640, len(filz), 10): # 72.92
+for j in range(550, len(filz), 5): # 71.79 + 4 = 75.79
 
 	print('j = ', j, filz[j])
 

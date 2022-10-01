@@ -99,7 +99,7 @@ except:
 	pass
 
 
-with open('hfv_IC_RND_10k.pkl', 'rb') as f:
+with open('hfv_IC_RND_18k.pkl', 'rb') as f:
 	data = pickle.load(f)
 
 r = data['r']

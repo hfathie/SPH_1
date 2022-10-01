@@ -5,7 +5,6 @@ import pickle
 import os
 from numba import jit, njit
 
-
 #===== getDensityx
 @njit
 def getDensity(pos, m, h):  # You may want to change your Kernel !!
@@ -776,34 +775,6 @@ def do_smoothingX(poz):
 
 
 
-#===== do_smoothingX_sample (non-parallel)
-@njit
-def do_smoothingX_sample(poz):# We only calculate h for 100 particles and then take the median of these 100 h as the initial h for all particles (for speeding up).
-
-    pos = poz[0]
-    subpos = poz[1]
-
-    N = pos.shape[0]
-    Mrand = [int(round(N*np.random.random())) for _ in range(100)]
-    #M = 1000 # subpos.shape[0]
-    hres = []
-
-    for i in Mrand:
-        dist = np.zeros(N)
-        for j in range(N):
-        
-            dx = pos[j, 0] - subpos[i, 0]
-            dy = pos[j, 1] - subpos[i, 1]
-            dz = pos[j, 2] - subpos[i, 2]
-            dist[j] = (dx**2 + dy**2 + dz**2)**0.5
-
-        hres.append(np.sort(dist)[50])
-
-    return np.array(hres) * 0.5
-
-
-
-
 #===== smoothing_length_mpi (same as do_smoothingX but modified fpr MPI)
 @njit
 def smoothing_length_mpi(nbeg, nend, pos):
@@ -845,6 +816,7 @@ def h_smooth_fast(pos, h):
 	for i in range(N):
 
 		hi = h[i]
+		
 		dist = np.zeros(N)
 
 		for j in range(N):
@@ -858,27 +830,34 @@ def h_smooth_fast(pos, h):
 		
 		niter = 0
 
-		while (Nngb > Nth_up) or (Nngb < Nth_low):
+		while (Nngb > Nth_up) | (Nngb < Nth_low):
+		
+			hi_before = hi
 		
 			if Nngb > Nth_up:
 
-				hi -= 0.003 * hi
+				hi -= 0.0001 * hi
 
 			if Nngb < Nth_low:
 				
-				hi += 0.003 * hi
+				hi += 0.0001 * hi
+			
+			hi_after = hi
 
 			Nngb = np.sum(dist < 2.0*hi)
 			
 			niter += 1
 			
-			if i == 37978:
-				print('hi, Nngb = ', hi, Nngb)
-			
 			if niter > n_Max_iteration:
-				pass
-				#print('i, h[i] = ', i, h[i], hi, Nngb)
-				#print('!!!!!! Maximum iteration in h computation reached !!!!!!')
+				print()
+				print('**********************************')
+				print('i, h[i], hi, Nngb = ', i, h[i], hi, Nngb)
+				print('!!!!!! Maximum iteration in h computation reached !!!!!!')
+				hi = (hi_before + hi_after)/2.
+				Nngb = np.sum(dist < 2.0*hi)
+				print('REPORT: The adopted Nngb = ', Nngb)
+				Nngb = 50 # So that it leaves the while loop!
+				print('**********************************')
 
 		hres[i] = hi
 
@@ -1007,7 +986,7 @@ def h_smooth_fast_mpi(nbeg, nend, pos, h):
 
 
 
-
+import logging
 
 
 #===== h_smooth_fast_mpi_min_h_set
@@ -1040,30 +1019,35 @@ def h_smooth_fast_mpi_min_h_set(nbeg, nend, pos, h, minimum_h):
 		Nngb = np.sum(dist < 2.0*hi)
 
 		niter = 0
-		
-		Checker = 0
 
-		while ((Nngb > Nth_up) or (Nngb < Nth_low)) & (Checker == 0):
+		while (Nngb > Nth_up) | (Nngb < Nth_low):
 		
+			hi_before = hi
+
 			if Nngb > Nth_up:
 
-				hi -= 0.003 * hi
+				hi -= 0.0001 * hi
 
 			if Nngb < Nth_low:
-				
-				hi += 0.003 * hi
+
+				hi += 0.0001 * hi
+			
+			hi_after = hi
 
 			Nngb = np.sum(dist < 2.0*hi)
-			
+
 			niter += 1
 			
-			if (niter > 10) & (hi < minimum_h): # We let it to update itself for 10 iteration. If it is still < minimum_h then we skip it.
-				hi = minimum_h
-				Checker = 1
-			
 			if niter > n_Max_iteration:
+				print()
+				print('**********************************')
+				print('i, h[i], hi, Nngb = ', i, h[i], hi, Nngb)
 				print('!!!!!! Maximum iteration in h computation reached !!!!!!')
-				print('!!!! This is the h and Nngb responsible for this = ', hi, Nngb)
+				hi = (hi_before + hi_after)/2.
+				Nngb = np.sum(dist < 2.0*hi)
+				print('REPORT: The adopted Nngb = ', Nngb)
+				Nngb = 50 # So that it leaves the while loop!
+				print('**********************************')
 
 		hres[i-nbeg] = hi
 
@@ -1090,7 +1074,7 @@ def getAcc_g_smth_mimj_mpi(nbeg, nend, pos, mass, G, epsilon):
 			
 			rr = (dx*dx + dy*dy + dz*dz)**0.5
 
-			inv_r3 = 1.0 / (rr**3 + 1e-6) # 1e-6 is added in case of rr = 0 !
+			inv_r3 = 1.0 / rr**3
 
 			epsilonij = 0.5 * (epsilon[i] + epsilon[j])
 			q = rr / epsilonij

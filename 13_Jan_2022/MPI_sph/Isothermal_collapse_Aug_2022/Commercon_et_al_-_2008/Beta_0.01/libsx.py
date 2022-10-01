@@ -5,6 +5,7 @@ import pickle
 import os
 from numba import jit, njit
 
+import matplotlib.pyplot as plt
 
 #===== getDensityx
 @njit
@@ -776,34 +777,6 @@ def do_smoothingX(poz):
 
 
 
-#===== do_smoothingX_sample (non-parallel)
-@njit
-def do_smoothingX_sample(poz):# We only calculate h for 100 particles and then take the median of these 100 h as the initial h for all particles (for speeding up).
-
-    pos = poz[0]
-    subpos = poz[1]
-
-    N = pos.shape[0]
-    Mrand = [int(round(N*np.random.random())) for _ in range(100)]
-    #M = 1000 # subpos.shape[0]
-    hres = []
-
-    for i in Mrand:
-        dist = np.zeros(N)
-        for j in range(N):
-        
-            dx = pos[j, 0] - subpos[i, 0]
-            dy = pos[j, 1] - subpos[i, 1]
-            dz = pos[j, 2] - subpos[i, 2]
-            dist[j] = (dx**2 + dy**2 + dz**2)**0.5
-
-        hres.append(np.sort(dist)[50])
-
-    return np.array(hres) * 0.5
-
-
-
-
 #===== smoothing_length_mpi (same as do_smoothingX but modified fpr MPI)
 @njit
 def smoothing_length_mpi(nbeg, nend, pos):
@@ -830,7 +803,7 @@ def smoothing_length_mpi(nbeg, nend, pos):
 
 
 #===== h_smooth_fast 
-@njit
+#@njit
 def h_smooth_fast(pos, h):
 
 	N = pos.shape[0]
@@ -858,7 +831,9 @@ def h_smooth_fast(pos, h):
 		
 		niter = 0
 
-		while (Nngb > Nth_up) or (Nngb < Nth_low):
+		while (Nngb > Nth_up) | (Nngb < Nth_low):
+		
+			print('i, hi, Nngb (Before) = ', i, hi, Nngb)
 		
 			if Nngb > Nth_up:
 
@@ -872,13 +847,21 @@ def h_smooth_fast(pos, h):
 			
 			niter += 1
 			
-			if i == 37978:
-				print('hi, Nngb = ', hi, Nngb)
+			print('i, hi, Nngb (After) = ', i, hi, Nngb)
+			print()
+			time.sleep(3)
+			
+			#plt.scatter(pos[:, 0], pos[:, 1], s = 0.1)
+			#plt.plot(pos[i, 0], pos[i, 1], marker = 'o')
+			#plt.show()
+			
+			#if i == 0:
+			#	print('i, hi, Nngb = ', i, hi, Nngb)
 			
 			if niter > n_Max_iteration:
-				pass
-				#print('i, h[i] = ', i, h[i], hi, Nngb)
-				#print('!!!!!! Maximum iteration in h computation reached !!!!!!')
+				print('i, h[i], hi, Nngb = ', i, h[i], hi, Nngb)
+				print('!!!!!! Maximum iteration in h computation reached !!!!!!')
+				time.sleep(0.5)
 
 		hres[i] = hi
 
@@ -1090,7 +1073,7 @@ def getAcc_g_smth_mimj_mpi(nbeg, nend, pos, mass, G, epsilon):
 			
 			rr = (dx*dx + dy*dy + dz*dz)**0.5
 
-			inv_r3 = 1.0 / (rr**3 + 1e-6) # 1e-6 is added in case of rr = 0 !
+			inv_r3 = 1.0 / rr**3
 
 			epsilonij = 0.5 * (epsilon[i] + epsilon[j])
 			q = rr / epsilonij

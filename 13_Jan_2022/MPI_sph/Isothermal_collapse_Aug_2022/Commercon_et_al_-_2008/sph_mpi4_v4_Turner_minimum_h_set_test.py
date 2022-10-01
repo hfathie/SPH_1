@@ -11,12 +11,12 @@ import pickle
 import os
 from libsx import *
 from mpi4py import MPI
-from shear import *
+from shear_test import *
 
 
 #----- P_polytrop_mpi
 @njit
-def P_polytrop_mpi(nbeg, nend, rho, c_iso):
+def P_polytrop_mpi(nbeg, nend, rho, rho_crit, c_0):
 
 	M = nend - nbeg
 	P_res = np.zeros(M)
@@ -25,16 +25,16 @@ def P_polytrop_mpi(nbeg, nend, rho, c_iso):
 		
 		rhot = rho[i]*UnitDensity_in_cgs
 		
-		P_res[i-nbeg] = rhot * c_iso * c_iso
+		P_res[i-nbeg] = rhot * c_0 * c_0 * (1. + (rhot/rho_crit)**(2./3.))
 	
 	P_res = P_res / Unit_P_in_cgs
 
 	return P_res
 
 
-#----- sound_speed_mpi
+
 @njit
-def sound_speed_mpiXXXXX(nbeg, nend, c_s):
+def sound_speed_mpi(nbeg, nend, rho, rho_crit, c_0):
 
 	M = nend - nbeg
 	c = np.zeros(M)
@@ -42,24 +42,9 @@ def sound_speed_mpiXXXXX(nbeg, nend, c_s):
 	for i in range(nbeg, nend):
 		
 		rhot = rho[i]*UnitDensity_in_cgs
+		c_s2 = c_0*c_0 * (1. + (rhot/rho_crit)**(2./3.))
 
-		c[i-nbeg] = c_s
-		
-	return c / unitVelocity
-
-
-#----- sound_speed_mpi
-@njit
-def sound_speed_mpi(nbeg, nend, c_iso, rho_crit, gamma):
-
-	M = nend - nbeg
-	c = np.zeros(M)
-	
-	for i in range(nbeg, nend):
-		
-		rhot = rho[i]*UnitDensity_in_cgs
-
-		c[i-nbeg] = c_iso * (1. + (rhot/rho_crit)**(gamma-1.))**0.5
+		c[i-nbeg] = (c_s2)**0.5
 		
 	return c / unitVelocity
 
@@ -78,22 +63,18 @@ M_sun = 1.98992e+33 # gram
 grav_const_in_cgs = 6.67259e-8 #  cm3 g-1 s-2
 UnitMass_in_g = 1.0 * M_sun       # !!!!!!!!!!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!
 
-UnitRadius_in_cm = 4.99e+16  #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
+UnitRadius_in_cm = 7.07e16  #!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!
 UnitDensity_in_cgs = UnitMass_in_g / UnitRadius_in_cm**3
 Unit_u_in_cgs = grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm
 Unit_P_in_cgs = UnitDensity_in_cgs * Unit_u_in_cgs
 #unitVelocity = (grav_const_in_cgs * UnitMass_in_g / UnitRadius_in_cm)**0.5
 
-unitTime = (UnitRadius_in_cm**3/grav_const_in_cgs/UnitMass_in_g)**0.5
-unitTime_in_yr = unitTime / 3600. / 24. / 365.25
-unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
+#unitTime = (UnitRadius_in_cm**3/grav_const_in_cgs/UnitMass_in_g)**0.5
+#unitTime_in_yr = unitTime / 3600. / 24. / 365.25
+#unitTime_in_Myr = unitTime / 3600. / 24. / 365.25 / 1.e6
 
-print('unitTime_in_Myr = ', unitTime_in_Myr)
+#print('unitTime_in_Myr = ', unitTime_in_Myr)
 #print('unitVelocity = ', unitVelocity)
-
-#T_cld = 377.   #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-#T_0 = 10. #!!!!!!!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!!
-#T_ps  = T_0 #1382.3 #T_0 #!!!!!!!!!! CHANGE !!!!!!!!!!!!!!!!!!!! Calculated from jump condition.https://www.astronomy.ohio-state.edu/weinberg.21/A825/notes7.pdf
 
 #---- Constants -----------
 eta = 0.1
@@ -118,14 +99,19 @@ except:
 	pass
 
 
-
-with open('hfv_IC_RND_16k.pkl', 'rb') as f:
+with open('hfv_IC_RND_8k.pkl', 'rb') as f:
 	data = pickle.load(f)
 
 r = data['r']
 v = data['v'] #/ unitVelocity
 h = data['h']
 m = data['m']
+
+t_ff = data['t_ff']
+unitTime = data['unitTime']
+unitTime_in_yr = unitTime / 3600. / 24. / 365.25
+unitTime_in_kyr = unitTime / 3600. / 24. / 365.25 / 1.e3
+print('unitTime_in_kyr = ', unitTime_in_kyr)
 
 unitVelocity = data['unitVelocity']
 print('unitVelocity (See hfv_IC_generator) = ', unitVelocity)
@@ -136,29 +122,19 @@ mH = 1.6726e-24 # gram
 kB = 1.3807e-16  # cm2 g s-2 K-1
 T_0 = 10. # K,    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Note that for pure molecular hydrogen mu=2. For molecular gas with ~10% He by mass and trace metals, mu ~ 2.7 is often used.
-muu = 3.0
+muu = 2.28 # !!!!!!!!!! Gives c_s = 1.9e4
 mH2 = muu * mH
 
-c_iso = 1.66e4  #(kB * T_0 / mH2)**0.5   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-rho_crit = 5e-12 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+c_0 = (kB * T_0 / mH2)**0.5   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+rho_crit = 1e-13 # g/cm3
 
-print(f'Speed of sound = {c_iso}')
+print(f'c_0 = {c_0}')
 
 print(h.shape)
 
 print(np.sort(h))
 
 print(r.shape)
-
-#print('rho_cen = ', rho_0)
-
-
-#if rank == 0:
-#	print(np.sort(v.flatten()))
-
-#	import matplotlib.pyplot as plt
-#	plt.scatter(r[:, 0], r[:, 1], s = 1, color = 'k')
-#	plt.show()
 
 
 print('The file is read .....')
@@ -271,10 +247,15 @@ if rank == 0:
 	print('TG = ', time.time() - TG)
 #----------------------
 
+abs_acc = (acc_g[:, 0]*acc_g[:, 0] + acc_g[:, 1]*acc_g[:, 1] + acc_g[:, 2]*acc_g[:, 2])**0.5
+dt_f = np.min((h/abs_acc)**0.5)
+#ErrTolIntAccuracy = 0.25
+#dt_f2 = np.min((2.*ErrTolIntAccuracy*h/abs_acc)**0.5)
+
 
 #--------- p ----------
 P = 0.
-local_P = P_polytrop_mpi(nbeg, nend, rho, c_s)
+local_P = P_polytrop_mpi(nbeg, nend, rho, rho_crit, c_0)
 
 if rank == 0:
 	P = local_P
@@ -289,7 +270,7 @@ P = comm.bcast(P, root = 0)
 
 #--------- c ----------
 c = 0.
-local_c = sound_speed_mpi(nbeg, nend, c_iso, rho_crit, gamma)
+local_c = sound_speed_mpi(nbeg, nend, rho, rho_crit, c_0)
 
 if rank == 0:
 	c = local_c
@@ -321,20 +302,32 @@ divV = comm.bcast(divV, root = 0)
 curlV = comm.bcast(curlV, root = 0)
 #----------------------
 
-#------ acc_sph -------
+#------ acc_sph mu_visc -------
 acc_sph = 0.0
-local_acc_sph = getAcc_sph_shear_mpi_Gad_art_vis(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha)
+dt_cv = 0.0
+tmp = getAcc_sph_shear_mpi(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha, beta, eta)
+
+local_acc_sph = tmp[0]
+local_dt_cv = tmp[1]
+
 
 if rank == 0:
 	acc_sph = local_acc_sph
+	dt_cv = local_dt_cv
 	for i in range(1, nCPUs):
-		acc_sph_tmp = comm.recv(source = i)
+		tmpt = comm.recv(source = i)
+		acc_sph_tmp = tmpt[0]
+		dt_cv_tmp = tmpt[1]
 		acc_sph = np.concatenate((acc_sph, acc_sph_tmp))
+		dt_cv = np.concatenate((dt_cv, dt_cv_tmp))
 else:
-	comm.send(local_acc_sph, dest = 0)
+	comm.send([local_acc_sph, local_dt_cv], dest = 0)
 
 acc_sph = comm.bcast(acc_sph, root = 0)
+dt_cv = comm.bcast(dt_cv, root = 0)
+dt_cv = np.min(dt_cv)
 #----------------------
+
 
 #-------- acc ---------
 acc = 0.0
@@ -343,6 +336,9 @@ if rank == 0:
 
 acc = comm.bcast(acc, root = 0)
 #----------------------
+
+abs_acc = (acc[:, 0]*acc[:, 0] + acc[:, 1]*acc[:, 1] + acc[:, 2]*acc[:, 2])**0.5
+dt_kin = np.min((h/abs_acc)**0.5)
 
 #--------- ut ---------
 #ut = 0.0
@@ -453,7 +449,7 @@ while t < tEnd:
 	#----------------------
 	
 	#--------- p ----------
-	local_P = P_polytrop_mpi(nbeg, nend, rho, c_s)
+	local_P = P_polytrop_mpi(nbeg, nend, rho, rho_crit, c_0)
 
 	if rank == 0:
 		P = local_P
@@ -467,7 +463,7 @@ while t < tEnd:
 	#----------------------
 
 	#--------- c ----------
-	local_c = sound_speed_mpi(nbeg, nend, c_iso, rho_crit, gamma)
+	local_c = sound_speed_mpi(nbeg, nend, rho, rho_crit, c_0)
 
 	if rank == 0:
 		c = local_c
@@ -496,18 +492,30 @@ while t < tEnd:
 	curlV = comm.bcast(curlV, root = 0)
 	#----------------------
 	
-	#------ acc_sph -------
-	local_acc_sph = getAcc_sph_shear_mpi_Gad_art_vis(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha)
-	
+	#------ acc_sph mu_visc -------
+	acc_sph = 0.0
+	dt_cv = 0.0
+	tmp = getAcc_sph_shear_mpi(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha, beta, eta)
+
+	local_acc_sph = tmp[0]
+	local_dt_cv = tmp[1]
+
+
 	if rank == 0:
 		acc_sph = local_acc_sph
+		dt_cv = local_dt_cv
 		for i in range(1, nCPUs):
-			acc_sph_tmp = comm.recv(source = i)
+			tmpt = comm.recv(source = i)
+			acc_sph_tmp = tmpt[0]
+			dt_cv_tmp = tmpt[1]
 			acc_sph = np.concatenate((acc_sph, acc_sph_tmp))
+			dt_cv = np.concatenate((dt_cv, dt_cv_tmp))
 	else:
-		comm.send(local_acc_sph, dest = 0)
-	
+		comm.send([local_acc_sph, local_dt_cv], dest = 0)
+
 	acc_sph = comm.bcast(acc_sph, root = 0)
+	dt_cv = comm.bcast(dt_cv, root = 0)
+	dt_cv = np.min(dt_cv)
 	#----------------------
 
 	#-------- acc ---------
@@ -517,13 +525,36 @@ while t < tEnd:
 	acc = comm.bcast(acc, root = 0)
 	#----------------------
 	
+	#--- TimeStep Calculation ---
+	abs_acc = (acc_g[:, 0]*acc_g[:, 0] + acc_g[:, 1]*acc_g[:, 1] + acc_g[:, 2]*acc_g[:, 2])**0.5
+	dt_f = np.min((h/abs_acc)**0.5)
+	
+	abs_acc = (acc[:, 0]*acc[:, 0] + acc[:, 1]*acc[:, 1] + acc[:, 2]*acc[:, 2])**0.5
+	dt_kin = np.min((h/abs_acc)**0.5)
+
+	#---
+	v_sig = [np.max(c[i]+c) for i in range(len(c))]
+	v_signal = np.max(v_sig)
+	C_CFL = 0.25
+	dt_cfl = np.min(C_CFL * h / v_signal)
+	#---
+
+	dh_dt = 1./3. * h * divV # See the line below eq.31 in Gadget 2 paper.
+	dt_dens = np.min(C_CFL * h / np.abs(dh_dt))
+
+	dt = 0.25 * np.min([dt_f, dt_cv, dt_kin, dt_cfl, dt_dens])
+	
+	if dt < 1e-4:
+		dt = 1e-4 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	#--- End of TimeStep Calculation --
+
 	#--------- v ----------
 	if rank == 0:
 		v += acc * dt/2.0
-	
+
 	v = comm.bcast(v, root = 0)
 	#----------------------
-	
+
 	#--------- ut ---------
 	#local_ut = get_dU_shear_mpi(nbeg, nend, r, v, rho, P, c, h, m, divV, curlV, alpha)
 	
@@ -555,20 +586,27 @@ while t < tEnd:
 	#u_previous = comm.bcast(u_previous, root=0)
 	#ut_previous = comm.bcast(ut_previous, root=0)
 	#----------------------
-	
+
 	t += dt
-	
+
 	if rank == 0:
 		if not (ii%50):
 			print('h/c = ', np.sort(h/c))
+			print('h = ', np.sort(h))
+			print('rho = ', np.sort(rho)*UnitDensity_in_cgs)
 
 	if rank == 0:
-		dictx = {'pos': r, 'v': v, 'm': m, 'dt': dt, 'current_t': t, 'rho': rho, 'h': h}
+		dictx = {'pos': r, 'v': v, 'm': m, 'dt': dt, 'current_t': t, 'rho': rho, 'h': h,
+		         'unitTime': unitTime, 'unitVelocity': unitVelocity, 't_ff': t_ff}
+
 		with open('./Outputs/' + str(ii).zfill(5) + '.pkl', 'wb') as f:
 			pickle.dump(dictx, f)
+		
 		ii += 1
-	
+
 	if rank == 0:
+		print('dt_f, dt_cv, dt_kin, dt_cfl, dt_dens = ', [dt_f, dt_cv, dt_kin, dt_cfl, dt_dens])
+		print(f'Adopted dt = {dt}')
 		print('Loop time = ', time.time() - TLoop)
 
 print('elapsed time = ', time.time() - TA)
