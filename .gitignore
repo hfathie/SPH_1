@@ -8,3 +8,4 @@ __pycache__/
 *.dat
 *.hdf5
 *.csv
+*/restartfiles/*
