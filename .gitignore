@@ -9,3 +9,4 @@ __pycache__/
 *.hdf5
 *.csv
 */restartfiles/*
+*/.ipynb_checkpoints/*
